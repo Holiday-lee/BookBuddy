@@ -1,3 +1,8 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+
 package com.bookbuddy.bookbuddy.config;
 
 import org.springframework.context.annotation.Bean;
@@ -8,10 +13,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 
 /**
  *
@@ -33,8 +34,9 @@ public class SecurityConfig {
                 .requestMatchers("/", "/index.html").permitAll()
                 .requestMatchers("/pages/login.html", "/pages/register.html").permitAll()
                 
-                // Registration endpoints - ADDED THESE
-                .requestMatchers("/register", "/api/check-email").permitAll()
+                // Registration and login endpoints - CRITICAL: These must be public
+                .requestMatchers("/register", "/login", "/logout").permitAll()
+                .requestMatchers("/api/check-email", "/api/current-user").permitAll()
                 
                 // Static resources - allow all
                 .requestMatchers("/static/**").permitAll()
@@ -56,9 +58,12 @@ public class SecurityConfig {
                 .requestMatchers("/pages/chat.html").authenticated()
                 .requestMatchers("/pages/swap-history.html").authenticated()
                 .requestMatchers("/pages/profile.html").authenticated()
+                .requestMatchers("/pages/search-by-location.html").authenticated()
+                .requestMatchers("/pages/my-books.html").authenticated()
+                .requestMatchers("/pages/settings.html").authenticated()
                 
                 // API endpoints - require authentication
-                .requestMatchers("/api/books/**").authenticated()
+                .requestMatchers("/api/books/create", "/api/books/update/**", "/api/books/delete/**").authenticated()
                 .requestMatchers("/api/requests/**").authenticated()
                 .requestMatchers("/api/chat/**").authenticated()
                 .requestMatchers("/api/profile/**").authenticated()
@@ -67,13 +72,10 @@ public class SecurityConfig {
                 // Everything else requires authentication
                 .anyRequest().authenticated()
             )
-            .formLogin(form -> form
-                .loginPage("/pages/login.html")
-                .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/", true)  // Redirect to homepage after login
-                .failureUrl("/pages/login.html?error=true")
-                .permitAll()
-            )
+            // DISABLE Spring Security's default form login completely
+            .formLogin(form -> form.disable())
+            
+            // Configure logout
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/")  // Redirect to public homepage after logout
@@ -85,8 +87,8 @@ public class SecurityConfig {
                 .maximumSessions(1)
                 .maxSessionsPreventsLogin(false)
             )
-            // Disable CSRF for POST requests (or configure CSRF tokens properly)
-            .csrf(csrf -> csrf.disable()); // ADDED THIS for simplicity
+            // Disable CSRF for now (easier for testing)
+            .csrf(csrf -> csrf.disable());
             
         return http.build();
     }

@@ -14,11 +14,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Optional;
 
-/**
- *
- * @author holiday
- */
-
 @Controller
 public class AuthController {
     
@@ -30,7 +25,7 @@ public class AuthController {
     }
     
     /**
-     * Handle user registration from your HTML form
+     * Handle user registration
      */
     @PostMapping("/register")
     public String registerUser(@RequestParam("firstName") String firstName,
@@ -40,29 +35,21 @@ public class AuthController {
                              RedirectAttributes redirectAttributes) {
         
         try {
-            // Register the user
             User newUser = userService.registerUser(firstName, lastName, email, password);
             
-            // Add success message
             redirectAttributes.addFlashAttribute("successMessage", 
                 "Registration successful! Welcome to BookBuddy, " + newUser.getFirstName() + "!");
             
-            // Redirect to login page
             return "redirect:/pages/login.html";
             
         } catch (IllegalArgumentException e) {
-            // Add error message
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-            
-            // Keep the form data for user convenience
             redirectAttributes.addFlashAttribute("firstName", firstName);
             redirectAttributes.addFlashAttribute("lastName", lastName);
             redirectAttributes.addFlashAttribute("email", email);
             
-            // Redirect back to registration page
             return "redirect:/pages/register.html";
         } catch (Exception e) {
-            // Handle unexpected errors
             redirectAttributes.addFlashAttribute("errorMessage", 
                 "Registration failed. Please try again.");
             
@@ -71,7 +58,7 @@ public class AuthController {
     }
     
     /**
-     * Handle user login (if you want to create a custom login endpoint)
+     * Handle user login
      */
     @PostMapping("/login")
     public String loginUser(@RequestParam("email") String email,
@@ -80,9 +67,7 @@ public class AuthController {
                            RedirectAttributes redirectAttributes) {
         
         try {
-            // Authenticate user
             if (userService.authenticateUser(email, password)) {
-                // Get user details
                 Optional<User> userOpt = userService.findByEmail(email);
                 if (userOpt.isPresent()) {
                     User user = userOpt.get();
@@ -92,24 +77,33 @@ public class AuthController {
                     session.setAttribute("userId", user.getId());
                     session.setAttribute("userEmail", user.getEmail());
                     session.setAttribute("userName", user.getFullName());
+                    session.setAttribute("isAuthenticated", true);
                     
-                    // Redirect to home page
+                    redirectAttributes.addFlashAttribute("successMessage", 
+                        "Welcome back, " + user.getFirstName() + "!");
+                    
                     return "redirect:/";
                 }
             }
             
-            // Authentication failed
-            redirectAttributes.addFlashAttribute("errorMessage", 
-                "Invalid email or password. Please try again.");
-            
-            return "redirect:/pages/login.html";
+            return "redirect:/pages/login.html?error=true";
             
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", 
-                "Login failed. Please try again.");
-            
-            return "redirect:/pages/login.html";
+            return "redirect:/pages/login.html?error=true";
         }
+    }
+    
+    /**
+     * Handle logout
+     */
+    @GetMapping("/logout")
+    public String logout(HttpSession session, RedirectAttributes redirectAttributes) {
+        session.invalidate();
+        
+        redirectAttributes.addFlashAttribute("successMessage", 
+            "You have been logged out successfully.");
+        
+        return "redirect:/";
     }
     
     /**
@@ -128,6 +122,7 @@ public class AuthController {
     @ResponseBody
     public Object getCurrentUser(HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
+        
         if (user != null) {
             return new Object() {
                 public final Long id = user.getId();
@@ -135,8 +130,13 @@ public class AuthController {
                 public final String lastName = user.getLastName();
                 public final String email = user.getEmail();
                 public final String fullName = user.getFullName();
+                public final boolean authenticated = true;
             };
         }
-        return null;
+        
+        return new Object() {
+            public final boolean authenticated = false;
+            public final String message = "Not logged in";
+        };
     }
 }

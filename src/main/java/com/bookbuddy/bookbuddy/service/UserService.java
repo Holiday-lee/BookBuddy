@@ -14,10 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
-/**
- *
- * @author holiday
- */
 @Service
 @Transactional
 public class UserService {

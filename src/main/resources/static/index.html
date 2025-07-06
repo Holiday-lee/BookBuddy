@@ -15,7 +15,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
 
         <!-- Page Title & Favicon -->
         <title>BookBuddy - Your Neighborhood Book Exchange Platform</title>	
-        <link rel="icon" href="images/bookbuddy_logo.png" type="image/png">
+        <link rel="icon" href="/images/bookbuddy_logo.png" type="image/png">
 
         <!-- Add bootstrap -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
@@ -26,232 +26,277 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
     </head>
 
     <body>
-        <!-- navbar -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
-            <div class="container-fluid ms-3">
-                <a class="navbar-brand" href="/">						
-                    <img src="images/bookbuddy_logo.png" alt="Logo" height="80">
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div class="collapse navbar-collapse" id="navMenu">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="/">Home</a>
-                        </li>
-
-                        <!-- Public pages - always visible -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="/pages/search-books.html">Search for Books</a>
-                        </li>
-
-                        <!-- Authentication-required navigation (will be hidden for unauthenticated users) -->
-                        <li class="nav-item auth-required" style="display: none;">
-                            <a class="nav-link auth-protected" href="/pages/list-book.html">List a Book</a>
-                        </li>
-                        <li class="nav-item auth-required" style="display: none;">
-                            <a class="nav-link auth-protected" href="/pages/my-received-requests.html">Received Requests</a>
-                        </li>
-                        <li class="nav-item auth-required" style="display: none;">
-                            <a class="nav-link auth-protected" href="/pages/my-sent-requests.html">Sent Requests</a>
-                        </li>
-                        <li class="nav-item auth-required" style="display: none;">
-                            <a class="nav-link auth-protected" href="/pages/chat.html">Chat</a>
-                        </li>
-                        <li class="nav-item auth-required" style="display: none;">
-                            <a class="nav-link auth-protected" href="/pages/swap-history.html">Swap History</a>
-                        </li>
-                        <li class="nav-item auth-required" style="display: none;">
-                            <a class="nav-link auth-protected" href="/pages/profile.html">Profile</a>
-                        </li>
-                    </ul>
-
-                    <!-- Authentication buttons -->
-                    <div class="d-flex">
-                        <div id="auth-buttons" class="auth-buttons">
-                            <a href="/pages/login.html" class="btn btn-outline-primary me-2">Login</a>
-                            <a href="/pages/register.html" class="btn btn-primary">Sign Up</a>
-                        </div>
-                        <div id="user-menu" class="auth-required" style="display: none;">
-                            <a href="/logout" class="btn btn-outline-danger">Logout</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Static Banner -->
-        <div class="banner-container position-relative text-center">
-            <a href="/pages/list-book.html" class="auth-protected">
-                <img src="images/book-swap.jpg" class="img-fluid w-100" alt="BookBuddy Banner">
+    <!-- Simplified Dynamic Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+        <div class="container-fluid ms-3">
+            <a class="navbar-brand" href="/">						
+                <img src="/images/bookbuddy_logo.png" alt="Logo" height="80">
             </a>
-        </div>
-
-        <!-- Objective Section -->
-        <section class="container my-5">
-            <h2 class="text-center mb-4">About BookBuddy</h2>
-            <p class="lead mb-3">
-                BookBuddy is a location-based web platform designed to help users exchange books with others nearby. Unlike traditional book-swapping platforms that might rely on global shipping, BookBuddy focuses on local, person-to-person swaps, making book swapping easier, faster, and more community-oriented. This platform allows users to list books they no longer need, search for books nearby, and arrange swaps with others through a secure and user-friendly interface. Whether it's a novel, a textbook, or a hidden gem, BookBuddy makes it simple to give books a second life.
-            </p>
-            <p class="lead">
-                The target users of the app are local communities, university and campus communities, or book lovers who are interested in discovering new titles through nearby, person-to-person exchanges. BookBuddy's aim is to encourage local sharing, cut down on waste, and make finding books more affordable and social.
-            </p>
-        </section>
-
-        <!-- How It Works Section -->
-        <section class="container my-5">
-            <h2 class="text-center mb-4">How BookBuddy Works</h2>
-            <div class="row row-cols-1 row-cols-md-2 g-4">
-
-            <div class="col">
-                <div class="card h-100 border-0">
-                <div class="card-body">
-                    <h5 class="card-title">1. Sign Up and Create Your Profile</h5>
-                    <p class="card-text">Register easily with your email or social accounts and set up your profile to start sharing and swapping books in your community.</p>
-                </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 border-0">
-                <div class="card-body">
-                    <h5 class="card-title">2. List Books You Want to Swap</h5>
-                    <p class="card-text">Add books from your collection that you're ready to share. Include details like title, author, genre, and condition — plus upload photos to attract other readers.</p>
-                </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 border-0">
-                <div class="card-body">
-                    <h5 class="card-title">3. Find Books Nearby</h5>
-                    <p class="card-text">Use BookBuddy's location-based search to browse books listed by users near you. Filter by radius, title, author, or genre to find your next great read close to home.</p>
-                </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 border-0">
-                <div class="card-body">
-                    <h5 class="card-title">4. Send and Receive Swap Requests</h5>
-                    <p class="card-text">When you find a book you want, send a swap request to the owner. Manage incoming and outgoing requests easily through your dashboard.</p>
-                </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 border-0">
-                <div class="card-body">
-                    <h5 class="card-title">5. Chat and Arrange the Swap</h5>
-                    <p class="card-text">Use the built-in chat system to coordinate pickup details, ask questions, or suggest swaps — all securely within the app.</p>
-                </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 border-0">
-                <div class="card-body">
-                    <h5 class="card-title">6. Complete the Swap and Enjoy Your Book</h5>
-                    <p class="card-text">Meet locally, exchange books, and dive into your new read! Track your swap history anytime and build connections with fellow book lovers.</p>
-                </div>
-                </div>
-            </div>
-
-            </div>
-        </section>
-
-        <!-- Login Required Modal -->
-        <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="loginModalLabel">Login Required</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navMenu">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <!-- Home - Always Visible -->
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/">Home</a>
+                    </li>
+                    
+                    <!-- Search Books - Always Visible -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="/pages/search-books.html">Search Books</a>
+                    </li>
+                    
+                    <!-- === AUTHENTICATED USER FEATURES (Hidden by default) === -->
+                    
+                    <!-- List a Book -->
+                    <li class="nav-item auth-required" style="display: none;">
+                        <a class="nav-link" href="/pages/list-book.html">List a Book</a>
+                    </li>
+                    
+                    <!-- My Received Requests -->
+                    <li class="nav-item auth-required" style="display: none;">
+                        <a class="nav-link" href="/pages/my-received-requests.html">My Received Requests</a>
+                    </li>
+                    
+                    <!-- My Sent Requests -->
+                    <li class="nav-item auth-required" style="display: none;">
+                        <a class="nav-link" href="/pages/my-sent-requests.html">My Sent Requests</a>
+                    </li>
+                    
+                    <!-- Chat -->
+                    <li class="nav-item auth-required" style="display: none;">
+                        <a class="nav-link" href="/pages/chat.html">Chat</a>
+                    </li>
+                    
+                    <!-- Swap History -->
+                    <li class="nav-item auth-required" style="display: none;">
+                        <a class="nav-link" href="/pages/swap-history.html">Swap History</a>
+                    </li>
+                </ul>
+                
+                <!-- Authentication buttons / User menu -->
+                <div class="d-flex">
+                    <!-- Show when NOT logged in -->
+                    <div id="auth-buttons" class="auth-buttons">
+                        <a href="/pages/login.html" class="btn btn-outline-primary me-2">Login</a>
+                        <a href="/pages/register.html" class="btn btn-primary">Sign Up</a>
                     </div>
-                    <div class="modal-body text-center">
-                        <div class="mb-3">
-                            <i class="fas fa-lock fa-3x text-primary mb-3"></i>
-                            <h6>Please log in to access this feature</h6>
-                            <p class="text-muted">You need to be logged in to view book details, send swap requests, and access other features.</p>
-                        </div>
-                    </div>
-                    <div class="modal-footer justify-content-center">
-                        <a href="/pages/login.html" class="btn btn-primary">Login</a>
-                        <a href="/pages/register.html" class="btn btn-outline-primary">Sign Up</a>
+                    
+                    <!-- Show when logged in -->
+                    <div id="user-menu" class="auth-required dropdown" style="display: none;">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <span id="user-name">User</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/pages/profile.html">👤 My Profile</a></li>
+                            <li><a class="dropdown-item" href="/pages/my-books.html">📚 My Books</a></li>
+                            <li><a class="dropdown-item" href="/pages/settings.html">⚙️ Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">🚪 Logout</a></li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
+    </nav>
 
-        <!-- footer -->
-        <section class="bg-light text-dark">
-            <div class="container mt-3">
-              <div class="row g-4 justify-content-center">
+    <!-- Success/Error Messages -->
+    <div class="container mt-3">
+        <div id="flash-messages"></div>
+    </div>
 
-                <!-- Follow us centered in full width -->
-                <div class="col-12 text-center mb-5">
-                  <h5 class="category-heading">Follow us</h5>
-                  <div class="d-flex justify-content-center gap-4">
-                    <a href="https://www.facebook.com/NCIRL/" class="fuIcon">
-                      <img src="images/icons8-facebook-128.png" alt="facebook icon">
-                    </a>
-                    <a href="https://www.instagram.com/ncirl/" class="fuIcon">
-                      <img src="images/icons8-instagram-160.png" alt="instagram icon">
-                    </a>
-                    <a href="https://x.com/NCIRL" class="fuIcon">
-                      <img src="images/icons8-twitterx-144.png" alt="twitter icon">
-                    </a>
-                  </div>
-                </div>
+    <!-- Static Banner -->
+    <div class="banner-container position-relative text-center">
+        <a href="/pages/search-books.html">
+            <img src="/images/book-swap.jpg" class="img-fluid w-100" alt="BookBuddy Banner">
+        </a>
+    </div>
 
-              </div>
-              <div class="col-12 mt-2 pb-2 text-center text-light">
-                &copy; 2025, BookBuddy
+    <!-- About BookBuddy Section -->
+    <section class="container my-5">
+        <h2 class="text-center mb-4">About BookBuddy</h2>
+        <p class="lead mb-3">
+            BookBuddy is a location-based web platform designed to help users exchange books with others nearby. Unlike traditional book-swapping platforms that might rely on global shipping, BookBuddy focuses on local, person-to-person swaps, making book swapping easier, faster, and more community-oriented. This platform allows users to list books they no longer need, search for books nearby, and arrange swaps with others through a secure and user-friendly interface. Whether it's a novel, a textbook, or a hidden gem, BookBuddy makes it simple to give books a second life.
+        </p>
+        <p class="lead">
+            The target users of the app are local communities, university and campus communities, or book lovers who are interested in discovering new titles through nearby, person-to-person exchanges. BookBuddy's aim is to encourage local sharing, cut down on waste, and make finding books more affordable and social.
+        </p>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="container my-5">
+        <h2 class="text-center mb-4">How BookBuddy Works</h2>
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+        
+        <div class="col">
+            <div class="card h-100 border-0">
+            <div class="card-body">
+                <h5 class="card-title">1. Sign Up and Create Your Profile</h5>
+                <p class="card-text">Register easily with your email and set up your profile to start sharing and swapping books in your community.</p>
+            </div>
+            </div>
+        </div>
+        
+        <div class="col">
+            <div class="card h-100 border-0">
+            <div class="card-body">
+                <h5 class="card-title">2. List Books You Want to Swap</h5>
+                <p class="card-text">Add books from your collection that you're ready to share. Include details like title, author, genre, and condition — plus upload photos to attract other readers.</p>
+            </div>
+            </div>
+        </div>
+        
+        <div class="col">
+            <div class="card h-100 border-0">
+            <div class="card-body">
+                <h5 class="card-title">3. Find Books Nearby</h5>
+                <p class="card-text">Use BookBuddy's location-based search to browse books listed by users near you. Filter by radius, title, author, or genre to find your next great read close to home.</p>
+            </div>
+            </div>
+        </div>
+        
+        <div class="col">
+            <div class="card h-100 border-0">
+            <div class="card-body">
+                <h5 class="card-title">4. Send and Receive Swap Requests</h5>
+                <p class="card-text">When you find a book you want, send a swap request to the owner. Manage incoming and outgoing requests easily through your dashboard.</p>
+            </div>
+            </div>
+        </div>
+        
+        <div class="col">
+            <div class="card h-100 border-0">
+            <div class="card-body">
+                <h5 class="card-title">5. Chat and Arrange the Swap</h5>
+                <p class="card-text">Use the built-in chat system to coordinate pickup details, ask questions, or suggest swaps — all securely within the app.</p>
+            </div>
+            </div>
+        </div>
+        
+        <div class="col">
+            <div class="card h-100 border-0">
+            <div class="card-body">
+                <h5 class="card-title">6. Complete the Swap and Enjoy Your Book</h5>
+                <p class="card-text">Meet locally, exchange books, and dive into your new read! Track your swap history anytime and build connections with fellow book lovers.</p>
+            </div>
+            </div>
+        </div>
+        
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <section class="bg-light text-dark">
+        <div class="container mt-3">
+          <div class="row g-4 justify-content-center">
+            
+            <!-- Follow us centered in full width -->
+            <div class="col-12 text-center mb-5">
+              <h5 class="category-heading">Follow us</h5>
+              <div class="d-flex justify-content-center gap-4">
+                <a href="https://www.facebook.com/NCIRL/" class="fuIcon">
+                  <img src="/images/icons8-facebook-128.png" alt="facebook icon">
+                </a>
+                <a href="https://www.instagram.com/ncirl/" class="fuIcon">
+                  <img src="/images/icons8-instagram-160.png" alt="instagram icon">
+                </a>
+                <a href="https://x.com/NCIRL" class="fuIcon">
+                  <img src="/images/icons8-twitterx-144.png" alt="twitter icon">
+                </a>
               </div>
             </div>
-        </section>
+      
+          </div>
+          <div class="col-12 mt-2 pb-2 text-center text-light">
+            &copy; 2025, BookBuddy
+          </div>
+        </div>
+    </section>
+    
+    <!-- Bootstrap Script -->	
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    
+    <!-- Authentication and Navigation Script -->
+    <script>
+        // Check authentication status and update navbar
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthenticationStatus();
+            displayFlashMessages();
+        });
 
-        <!-- Bootstrap Script -->	
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-
-        <!-- Updated Authentication Script -->
-        <script>
-            // Check if user is authenticated and show/hide navigation accordingly
-            document.addEventListener('DOMContentLoaded', function() {
-                // This would typically check with your backend
-                // For now, you can manually test by changing this value
-                const isAuthenticated = false; // Change to true to test logged-in view
-
-                const authRequired = document.querySelectorAll('.auth-required');
-                const authButtons = document.getElementById('auth-buttons');
-
-                if (isAuthenticated) {
-                    authRequired.forEach(element => element.style.display = 'block');
-                    authButtons.style.display = 'none';
+        async function checkAuthenticationStatus() {
+            try {
+                const response = await fetch('/api/current-user');
+                if (response.ok) {
+                    const user = await response.json();
+                    if (user && user.authenticated) {
+                        showAuthenticatedNavbar(user);
+                    } else {
+                        showPublicNavbar();
+                    }
                 } else {
-                    authRequired.forEach(element => element.style.display = 'none');
-                    authButtons.style.display = 'block';
+                    showPublicNavbar();
                 }
+            } catch (error) {
+                console.error('Error checking authentication:', error);
+                showPublicNavbar();
+            }
+        }
 
-                // Handle authentication-protected links
-                const authProtectedLinks = document.querySelectorAll('.auth-protected');
-
-                authProtectedLinks.forEach(link => {
-                    link.addEventListener('click', function(e) {
-                        if (!isAuthenticated) {
-                            e.preventDefault();
-                            // Show login modal
-                            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-                            loginModal.show();
-                        }
-                    });
-                });
+        function showAuthenticatedNavbar(user) {
+            // Hide login/signup buttons
+            document.getElementById('auth-buttons').style.display = 'none';
+            
+            // Show authenticated features
+            const authRequired = document.querySelectorAll('.auth-required');
+            authRequired.forEach(element => {
+                element.style.display = 'block';
             });
-        </script>
+            
+            // Update user name in dropdown
+            document.getElementById('user-name').textContent = user.firstName || 'User';
+        }
 
-        <!-- Navbar Script -->
-        <script src="/js/navbar-script.js"></script>
-    </body>
+        function showPublicNavbar() {
+            // Show login/signup buttons
+            document.getElementById('auth-buttons').style.display = 'flex';
+            
+            // Hide authenticated features
+            const authRequired = document.querySelectorAll('.auth-required');
+            authRequired.forEach(element => {
+                element.style.display = 'none';
+            });
+        }
+
+        function displayFlashMessages() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const flashContainer = document.getElementById('flash-messages');
+            
+            if (urlParams.get('success')) {
+                showFlashMessage('success', decodeURIComponent(urlParams.get('success')));
+            }
+            if (urlParams.get('error')) {
+                showFlashMessage('danger', decodeURIComponent(urlParams.get('error')));
+            }
+        }
+
+        function showFlashMessage(type, message) {
+            const flashContainer = document.getElementById('flash-messages');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            flashContainer.appendChild(alertDiv);
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
 </html>
