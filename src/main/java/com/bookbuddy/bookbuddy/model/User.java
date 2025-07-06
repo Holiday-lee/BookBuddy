@@ -4,46 +4,53 @@
  */
 package com.bookbuddy.bookbuddy.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 /**
- *
+ * 
  * @author holiday
  */
-
 @Entity
 @Table(name = "users")
 public class User {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(unique = true, nullable = false)
+    @NotBlank(message = "Email is required")
+    @Email(message = "Please provide a valid email address")
+    @Column(unique = true, nullable = false, length = 100)
     private String email;
     
+    @NotBlank(message = "Password is required")
+    @Size(min = 6, message = "Password must be at least 6 characters long")
     @Column(nullable = false)
     private String password;
     
-    @Column(nullable = false)
+    @NotBlank(message = "First name is required")
+    @Size(max = 50, message = "First name must be less than 50 characters")
+    @Column(nullable = false, length = 50)
     private String firstName;  
     
-    @Column(nullable = false)
+    @NotBlank(message = "Last name is required")
+    @Size(max = 50, message = "Last name must be less than 50 characters")
+    @Column(nullable = false, length = 50)
     private String lastName;
     
-    private String phone;       // Added optional phone field
-    private String address;     // Added optional address field
-    private Double latitude;
-    private Double longitude;
-    
     @CreationTimestamp
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
     
     // Default constructor
     public User() {}
@@ -97,38 +104,6 @@ public class User {
         this.lastName = lastName;
     }
     
-    public String getPhone() {
-        return phone;
-    }
-    
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-    
-    public String getAddress() {
-        return address;
-    }
-    
-    public void setAddress(String address) {
-        this.address = address;
-    }
-    
-    public Double getLatitude() {
-        return latitude;
-    }
-    
-    public void setLatitude(Double latitude) {
-        this.latitude = latitude;
-    }
-    
-    public Double getLongitude() {
-        return longitude;
-    }
-    
-    public void setLongitude(Double longitude) {
-        this.longitude = longitude;
-    }
-    
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -137,7 +112,15 @@ public class User {
         this.createdAt = createdAt;
     }
     
-    // Utility method to get full name
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+    
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+    
+    // Utility method
     public String getFullName() {
         return firstName + " " + lastName;
     }
@@ -151,5 +134,19 @@ public class User {
                 ", lastName='" + lastName + '\'' +
                 ", createdAt=" + createdAt +
                 '}';
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        
+        User user = (User) o;
+        return id != null ? id.equals(user.id) : user.id == null;
+    }
+    
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
     }
 }

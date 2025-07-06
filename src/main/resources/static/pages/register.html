@@ -1,9 +1,4 @@
 <!DOCTYPE html>
-<!--
-Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this template
--->
-
 <html lang="en">
     <head>
         <meta charset="UTF-8">
@@ -12,14 +7,14 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
         <meta name="keywords" content="book exchange, book swap, book swap app, book swap platforms">
         <meta name="robots" content="index,follow">
         <meta name="googlebot" content="index,follow">
-
+        
         <!-- Page Title & Favicon -->
         <title>BookBuddy - Sign up</title>	
-        <link rel="icon" href="images/bookbuddy_logo.png" type="image/png">
-
+        <link rel="icon" href="/images/bookbuddy_logo.png" type="image/png">
+        
         <!-- Add bootstrap -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-
+        
         <!-- Add CSS sheet -->
         <link rel="stylesheet" href="/css/stylesheet.css">
         <link rel="stylesheet" href="/css/index.css">
@@ -30,28 +25,118 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             <div class="row justify-content-center">
                 <div class="col-md-6">
                     <h2>Sign Up for BookBuddy</h2>
-                    <form action="/register" method="post">
+                    
+                    <!-- Success Message (from redirectAttributes) -->
+                    <div id="successMessage" class="alert alert-success alert-dismissible fade show" style="display: none;">
+                        <span id="successText"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    
+                    <!-- Error Message (from redirectAttributes) -->
+                    <div id="errorMessage" class="alert alert-danger alert-dismissible fade show" style="display: none;">
+                        <span id="errorText"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    
+                    <form action="/register" method="post" id="registrationForm">
                         <div class="mb-3">
                             <label for="firstName" class="form-label">First Name</label>
-                            <input type="text" class="form-control" id="firstName" name="firstName" required>
+                            <input type="text" class="form-control" id="firstName" name="firstName" required maxlength="50">
                         </div>
                         <div class="mb-3">
                             <label for="lastName" class="form-label">Last Name</label>
-                            <input type="text" class="form-control" id="lastName" name="lastName" required>
+                            <input type="text" class="form-control" id="lastName" name="lastName" required maxlength="50">
                         </div>
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
+                            <input type="email" class="form-control" id="email" name="email" required maxlength="100">
+                            <div id="emailExistsMessage" class="text-danger" style="display: none;">
+                                This email is already registered.
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
+                            <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                            <div class="form-text">Password must be at least 6 characters long.</div>
                         </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                            <div id="passwordMismatch" class="text-danger" style="display: none;">
+                                Passwords do not match.
+                            </div>
+                        </div>
+                        
                         <button type="submit" class="btn btn-secondary">Sign Up</button>
                         <a href="/pages/login.html" class="btn btn-link">Already have an account? Login</a>
                     </form>
                 </div>
             </div>
         </div>
+        
+        <!-- Bootstrap JavaScript -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+        
+        <script>
+            // Check for flash messages from URL parameters (if using redirectAttributes)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('success')) {
+                document.getElementById('successText').textContent = decodeURIComponent(urlParams.get('success'));
+                document.getElementById('successMessage').style.display = 'block';
+            }
+            if (urlParams.get('error')) {
+                document.getElementById('errorText').textContent = decodeURIComponent(urlParams.get('error'));
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+            
+            // Email validation
+            document.getElementById('email').addEventListener('blur', function() {
+                const email = this.value;
+                if (email) {
+                    fetch(`/api/check-email?email=${encodeURIComponent(email)}`)
+                        .then(response => response.json())
+                        .then(exists => {
+                            const message = document.getElementById('emailExistsMessage');
+                            if (exists) {
+                                message.style.display = 'block';
+                                this.setCustomValidity('Email already exists');
+                            } else {
+                                message.style.display = 'none';
+                                this.setCustomValidity('');
+                            }
+                        })
+                        .catch(error => console.error('Error checking email:', error));
+                }
+            });
+            
+            // Password confirmation
+            function validatePasswords() {
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const mismatchMessage = document.getElementById('passwordMismatch');
+                
+                if (confirmPassword && password !== confirmPassword) {
+                    mismatchMessage.style.display = 'block';
+                    document.getElementById('confirmPassword').setCustomValidity('Passwords do not match');
+                } else {
+                    mismatchMessage.style.display = 'none';
+                    document.getElementById('confirmPassword').setCustomValidity('');
+                }
+            }
+            
+            document.getElementById('password').addEventListener('input', validatePasswords);
+            document.getElementById('confirmPassword').addEventListener('input', validatePasswords);
+            
+            // Form submission validation
+            document.getElementById('registrationForm').addEventListener('submit', function(e) {
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                if (password !== confirmPassword) {
+                    e.preventDefault();
+                    document.getElementById('passwordMismatch').style.display = 'block';
+                }
+            });
+        </script>
     </body>
 </html>

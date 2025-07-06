@@ -76,6 +76,14 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+                
+                <!-- For User entity, added validation annotations(@NotBlank,@Email,@Size)for better data validation -->
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-validation</artifactId>
+                </dependency>
+                
+                
 	</dependencies>
 
 	<build>

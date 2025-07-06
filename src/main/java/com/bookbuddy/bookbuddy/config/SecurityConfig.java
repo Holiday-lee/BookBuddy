@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
@@ -32,6 +33,9 @@ public class SecurityConfig {
                 .requestMatchers("/", "/index.html").permitAll()
                 .requestMatchers("/pages/login.html", "/pages/register.html").permitAll()
                 
+                // Registration endpoints - ADDED THESE
+                .requestMatchers("/register", "/api/check-email").permitAll()
+                
                 // Static resources - allow all
                 .requestMatchers("/static/**").permitAll()
                 .requestMatchers("/css/**").permitAll()
@@ -40,11 +44,13 @@ public class SecurityConfig {
                 .requestMatchers("/fonts/**").permitAll()
                 .requestMatchers("/favicon.ico").permitAll()
                 
+                // Search functionality - PUBLIC as per your strategy
+                .requestMatchers("/pages/search-books.html").permitAll()
+                .requestMatchers("/search/**", "/api/books/search/**", "/api/books/nearby").permitAll()
+                
                 // Authenticated user features - require login (HTML pages)
                 .requestMatchers("/pages/dashboard.html").authenticated()
                 .requestMatchers("/pages/list-book.html").authenticated()
-                .requestMatchers("/pages/search-books.html").authenticated()
-                .requestMatchers("/pages/search-by-location.html").authenticated()
                 .requestMatchers("/pages/my-received-requests.html").authenticated()
                 .requestMatchers("/pages/my-sent-requests.html").authenticated()
                 .requestMatchers("/pages/chat.html").authenticated()
@@ -58,19 +64,13 @@ public class SecurityConfig {
                 .requestMatchers("/api/profile/**").authenticated()
                 .requestMatchers("/api/user/**").authenticated()
                 
-                // API endpoints for authenticated users
-                .requestMatchers("/api/books/**").authenticated()
-                .requestMatchers("/api/requests/**").authenticated()
-                .requestMatchers("/api/chat/**").authenticated()
-                .requestMatchers("/api/profile/**").authenticated()
-                
                 // Everything else requires authentication
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/pages/login.html")
                 .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/", true)  // Redirect to homepage after login (with nav bar)
+                .defaultSuccessUrl("/", true)  // Redirect to homepage after login
                 .failureUrl("/pages/login.html?error=true")
                 .permitAll()
             )
@@ -84,7 +84,9 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .maximumSessions(1)
                 .maxSessionsPreventsLogin(false)
-            );
+            )
+            // Disable CSRF for POST requests (or configure CSRF tokens properly)
+            .csrf(csrf -> csrf.disable()); // ADDED THIS for simplicity
             
         return http.build();
     }
