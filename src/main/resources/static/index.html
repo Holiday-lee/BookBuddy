@@ -38,17 +38,18 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             
             <div class="collapse navbar-collapse" id="navMenu">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <!-- Home - Always Visible -->
+                    
+                    <!-- Homepage always visible for public -->
                     <li class="nav-item">
                         <a class="nav-link active" aria-current="page" href="/">Home</a>
                     </li>
                     
-                    <!-- Search Books - Always Visible -->
+                    <!-- Search a Books always visible for public -->
                     <li class="nav-item">
                         <a class="nav-link" href="/pages/search-books.html">Search Books</a>
                     </li>
                     
-                    <!-- === AUTHENTICATED USER FEATURES (Hidden by default) === -->
+                    <!--THESE FEATURES ONLY WILL BE VISIBLE AFTER LOGIN -->
                     
                     <!-- List a Book -->
                     <li class="nav-item auth-required" style="display: none;">
@@ -76,15 +77,16 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                     </li>
                 </ul>
                 
-                <!-- Authentication buttons / User menu -->
+                <!-- RIGHT SIDE USER MENU(Authentication buttons)-->
                 <div class="d-flex">
-                    <!-- Show when NOT logged in -->
+                    
+                    <!-- BEFORE LOGIN WILL SHOW AS -->
                     <div id="auth-buttons" class="auth-buttons">
                         <a href="/pages/login.html" class="btn btn-outline-primary me-2">Login</a>
                         <a href="/pages/register.html" class="btn btn-primary">Sign Up</a>
                     </div>
                     
-                    <!-- Show when logged in -->
+                    <!-- AFTER LOGIN WILL SHOW AS -->
                     <div id="user-menu" class="auth-required dropdown" style="display: none;">
                         <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <span id="user-name">User</span>
@@ -92,7 +94,6 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="/pages/profile.html">👤 My Profile</a></li>
                             <li><a class="dropdown-item" href="/pages/my-books.html">📚 My Books</a></li>
-                            <li><a class="dropdown-item" href="/pages/settings.html">⚙️ Settings</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/logout">🚪 Logout</a></li>
                         </ul>
@@ -226,15 +227,16 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             displayFlashMessages();
         });
 
+        //  Checks if user is log in using an API end point
         async function checkAuthenticationStatus() {
             try {
-                const response = await fetch('/api/current-user');
+                const response = await fetch('/api/current-user'); // call API endpoint on the server
                 if (response.ok) {
-                    const user = await response.json();
-                    if (user && user.authenticated) {
-                        showAuthenticatedNavbar(user);
+                    const user = await response.json(); // the endpoint return in json
+                    if (user && user.authenticated) { // if user is logged in 
+                        showAuthenticatedNavbar(user); // run this method 
                     } else {
-                        showPublicNavbar();
+                        showPublicNavbar(); //run this only show public navbar
                     }
                 } else {
                     showPublicNavbar();
@@ -245,6 +247,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             }
         }
 
+        // after logged in view navbar & right side user info menu 
         function showAuthenticatedNavbar(user) {
             // Hide login/signup buttons
             document.getElementById('auth-buttons').style.display = 'none';
@@ -259,6 +262,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             document.getElementById('user-name').textContent = user.firstName || 'User';
         }
 
+        // Shows login/sign up buttons if not log in.
         function showPublicNavbar() {
             // Show login/signup buttons
             document.getElementById('auth-buttons').style.display = 'flex';
@@ -270,6 +274,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             });
         }
 
+        // shows success/error URL messages 
         function displayFlashMessages() {
             const urlParams = new URLSearchParams(window.location.search);
             const flashContainer = document.getElementById('flash-messages');
@@ -282,6 +287,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             }
         }
 
+        // Creates a message box for showing the messages
         function showFlashMessage(type, message) {
             const flashContainer = document.getElementById('flash-messages');
             const alertDiv = document.createElement('div');

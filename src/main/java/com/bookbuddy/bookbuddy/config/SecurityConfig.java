@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .requestMatchers("/", "/index.html").permitAll()
                 .requestMatchers("/pages/login.html", "/pages/register.html").permitAll()
                 
-                // Registration and login endpoints - CRITICAL: These must be public
+                // Pulic view for sign up and login endpoints
                 .requestMatchers("/register", "/login", "/logout").permitAll()
                 .requestMatchers("/api/check-email", "/api/current-user").permitAll()
                 
@@ -46,11 +46,11 @@ public class SecurityConfig {
                 .requestMatchers("/fonts/**").permitAll()
                 .requestMatchers("/favicon.ico").permitAll()
                 
-                // Search functionality - PUBLIC as per your strategy
+                // Publci access for search functionality 
                 .requestMatchers("/pages/search-books.html").permitAll()
                 .requestMatchers("/search/**", "/api/books/search/**", "/api/books/nearby").permitAll()
                 
-                // Authenticated user features - require login (HTML pages)
+                // Authenticated user features that require a login for other HTML pages
                 .requestMatchers("/pages/dashboard.html").authenticated()
                 .requestMatchers("/pages/list-book.html").authenticated()
                 .requestMatchers("/pages/my-received-requests.html").authenticated()
