@@ -14,12 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
-@Service
-@Transactional
+@Service //marks it as a Spring service (i.e., contains business logic)
+@Transactional //ensures that all DB operations in each method are atomic (rollback on failure)
 public class UserService {
     
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository; //Interface to interact with the database(like save, findByEmail, etc.).
+    private final PasswordEncoder passwordEncoder; //use to hash passwords and check password validity securely.
     
     @Autowired
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
@@ -31,7 +31,7 @@ public class UserService {
      * Register a new user
      */
     public User registerUser(String firstName, String lastName, String email, String password) {
-        // Check if user already exists
+        // Check if user already exists by checking the email is taken
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email already exists: " + email);
         }
@@ -44,24 +44,24 @@ public class UserService {
         user.setFirstName(firstName.trim());
         user.setLastName(lastName.trim());
         user.setEmail(email.toLowerCase().trim());
-        user.setPassword(passwordEncoder.encode(password));
+        user.setPassword(passwordEncoder.encode(password)); //hashes the password with PasswordEncoder
         
         return userRepository.save(user);
     }
     
     /**
-     * Find user by email
+     * Find user by email: use for login
      */
-    @Transactional(readOnly = true)
-    public Optional<User> findByEmail(String email) {
+    @Transactional(readOnly = true) //to optimise for read-only queries.
+    public Optional<User> findByEmail(String email) { //return Optional<User>, allowing safe handling of nulls
         return userRepository.findByEmail(email.toLowerCase().trim());
     }
     
     /**
-     * Find user by ID
+     * Find user by ID: use for data retrieval 
      */
     @Transactional(readOnly = true)
-    public Optional<User> findById(Long id) {
+    public Optional<User> findById(Long id) { //return Optional<User>, allowing safe handling of nulls.
         return userRepository.findById(id);
     }
     
@@ -74,20 +74,20 @@ public class UserService {
     }
     
     /**
-     * Authenticate user login
+     * Authenticate user login: look up users by their emails
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true)//to optimise for read-only queries.
     public boolean authenticateUser(String email, String password) {
         Optional<User> userOpt = findByEmail(email);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            return passwordEncoder.matches(password, user.getPassword());
+            return passwordEncoder.matches(password, user.getPassword()); //use passwordEncoder.matches() to compare entered password to hashed one in DB
         }
         return false;
     }
     
     /**
-     * Update user profile
+     * Update user profile: the user’s first and last name
      */
     public User updateUser(Long userId, String firstName, String lastName) {
         User user = userRepository.findById(userId)
@@ -100,48 +100,50 @@ public class UserService {
             user.setLastName(lastName.trim());
         }
         
-        return userRepository.save(user);
+        return userRepository.save(user); //save the updated user
     }
     
     /**
      * Change user password
      */
     public void changePassword(Long userId, String oldPassword, String newPassword) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(userId) //find the user by ID
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
         
-        // Verify old password
+        // verify old password if matches with the stored hash
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             throw new IllegalArgumentException("Current password is incorrect");
         }
         
-        // Validate new password
+        // validate new password length
         if (newPassword == null || newPassword.length() < 6) {
             throw new IllegalArgumentException("New password must be at least 6 characters long");
         }
         
-        user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
+        user.setPassword(passwordEncoder.encode(newPassword)); // hashes 
+        userRepository.save(user); // and saves the new password
     }
     
     /**
-     * Check if email exists
+     * Check if email exists (use in the AJAX call in the controller)
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true)//to optimise for read-only queries.
     public boolean emailExists(String email) {
         return userRepository.existsByEmail(email.toLowerCase().trim());
     }
     
     /**
-     * Get user count
+     * Get user count: return the total number of users in the system
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true)//to optimise for read-only queries.
     public long getUserCount() {
         return userRepository.count();
     }
     
     /**
-     * Search users by name
+     * Search users by name: search users whose full name contains the given substring
+     * depends on the custom query method: List<User> findByFullNameContaining(String name)
+     * in UserRepository, probably using Spring Data JPA
      */
     @Transactional(readOnly = true)
     public List<User> searchUsersByName(String name) {
@@ -149,7 +151,7 @@ public class UserService {
     }
     
     /**
-     * Validate user input
+     * Validate user input, check for required fields, valid email format,password length
      */
     private void validateUserInput(String firstName, String lastName, String email, String password) {
         if (firstName == null || firstName.trim().isEmpty()) {
@@ -170,7 +172,7 @@ public class UserService {
     }
     
     /**
-     * Basic email validation
+     * email validation, makes sure contains @ . and >5
      */
     private boolean isValidEmail(String email) {
         return email.contains("@") && email.contains(".") && email.length() > 5;

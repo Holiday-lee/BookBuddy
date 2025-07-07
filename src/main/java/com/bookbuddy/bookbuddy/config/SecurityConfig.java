@@ -22,12 +22,12 @@ import org.springframework.security.web.SecurityFilterChain;
  * Unauthenticated users are automatically redirected to /login
  */
 
-@Configuration
-@EnableWebSecurity
+@Configuration //marks this class as a Spring config class
+@EnableWebSecurity //enables Spring Security support for the application
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception { //defines the rules for securing HTTP requests
         http
             .authorizeHttpRequests(auth -> auth
                 // Public access - available to everyone (unauthenticated users)
@@ -50,6 +50,7 @@ public class SecurityConfig {
                 .requestMatchers("/pages/search-books.html").permitAll()
                 .requestMatchers("/search/**", "/api/books/search/**", "/api/books/nearby").permitAll()
                 
+                    
                 // Authenticated user features that require a login for other HTML pages
                 .requestMatchers("/pages/dashboard.html").authenticated()
                 .requestMatchers("/pages/list-book.html").authenticated()
@@ -69,23 +70,29 @@ public class SecurityConfig {
                 .requestMatchers("/api/profile/**").authenticated()
                 .requestMatchers("/api/user/**").authenticated()
                 
-                // Everything else requires authentication
+                // any request not matched above also requires login
                 .anyRequest().authenticated()
             )
+
             // DISABLE Spring Security's default form login completely
+            // as using own custom login page,handle login via AuthController, not through Spring's UI.
             .formLogin(form -> form.disable())
             
             // Configure logout
             .logout(logout -> logout
                 .logoutUrl("/logout")
-                .logoutSuccessUrl("/")  // Redirect to public homepage after logout
+                .logoutSuccessUrl("/")  // redirect to public homepage after logout
                 .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID")
+                .deleteCookies("JSESSIONID") //clear session and cookies
                 .permitAll()
             )
+            
+            // session management
             .sessionManagement(session -> session
-                .maximumSessions(1)
-                .maxSessionsPreventsLogin(false)
+                .maximumSessions(1) //limits each user to 1 session at a time
+                //if wanted to block the new login instead, set it to true
+                .maxSessionsPreventsLogin(false) //if user login again from a new device/browser,ends old session,allows the new session
+                    
             )
             // Disable CSRF for now (easier for testing)
             .csrf(csrf -> csrf.disable());
@@ -93,6 +100,7 @@ public class SecurityConfig {
         return http.build();
     }
     
+    // create a bean that hashes passwords using BCrypt for latter to use in UserService to encode, check passwords
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

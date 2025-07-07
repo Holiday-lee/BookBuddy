@@ -16,14 +16,17 @@ import java.util.List;
 /**
  *
  * @author holiday
+ * it defines custom query methods
  */
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+// JpaRepository<User, Long> :it inherits built-in CRUD operations like save(), findById(), delete(), 
+// and more — all for User entities, using Long as the ID type.
+public interface UserRepository extends JpaRepository<User, Long> { 
     
     /**
-     * Find user by email address
+     * find & return a user by email address
      */
-    Optional<User> findByEmail(String email);
+    Optional<User> findByEmail(String email); //returns Optional<User> to handle nulls safely
     
     /**
      * Check if user exists by email
@@ -32,23 +35,30 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     /**
      * Find users by first name (case insensitive)
+     * Automatically implemented by Spring based on method name
      */
     List<User> findByFirstNameIgnoreCase(String firstName);
     
     /**
      * Find users by last name (case insensitive)
+     * Automatically implemented by Spring based on method name
      */
     List<User> findByLastNameIgnoreCase(String lastName);
     
     /**
      * Find users by full name search (case insensitive)
+     * findByFullNameContaining() is a custom JPQL query
+     * it joins firstName and lastName with a space
+     * then it does a case-insensitive partial match with the given input (:name)
+     * For example: searching "john doe" will match users with full names like "John Doe" or "john DOe"
      */
     @Query("SELECT u FROM User u WHERE " +
            "LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<User> findByFullNameContaining(@Param("name") String name);
     
     /**
-     * Count total users
+     * count total users
+     * it inherited from JpaRepository
      */
     long count();
 }
