@@ -32,18 +32,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * Check if user exists by email
      */
     boolean existsByEmail(String email);
-    
-    /**
-     * Find users by first name (case insensitive)
-     * Automatically implemented by Spring based on method name
-     */
-    List<User> findByFirstNameIgnoreCase(String firstName);
-    
-    /**
-     * Find users by last name (case insensitive)
-     * Automatically implemented by Spring based on method name
-     */
-    List<User> findByLastNameIgnoreCase(String lastName);
+
     
     /**
      * Find users by full name search (case insensitive)
@@ -56,9 +45,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<User> findByFullNameContaining(@Param("name") String name);
     
-    /**
-     * count total users
-     * it inherited from JpaRepository
-     */
-    long count();
 }

@@ -72,19 +72,7 @@ public class UserService {
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
-    
-    /**
-     * Authenticate user login: look up users by their emails
-     */
-    @Transactional(readOnly = true)//to optimise for read-only queries.
-    public boolean authenticateUser(String email, String password) {
-        Optional<User> userOpt = findByEmail(email);
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            return passwordEncoder.matches(password, user.getPassword()); //use passwordEncoder.matches() to compare entered password to hashed one in DB
-        }
-        return false;
-    }
+   
     
     /**
      * Update user profile: the user’s first and last name

@@ -1,15 +1,23 @@
 
-// Function to check authentication status
-function checkAuthStatus() {
-    // This would typically make an API call to your backend
-    // For now, you can manually test by changing this value or checking localStorage
-    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true' || false;
-    return isAuthenticated;
+// Function to check authentication status using backend API
+async function checkAuthStatus() {
+    try {
+        const response = await fetch('/api/current-user', {
+            credentials: 'include'
+        });
+        if (response.ok) {
+            const user = await response.json();
+            return user && user.authenticated;
+        }
+        return false;
+    } catch (error) {
+        return false;
+    }
 }
 
 // Function to show/hide navigation based on authentication
-function updateNavigation() {
-    const isAuthenticated = checkAuthStatus();
+async function updateNavigation() {
+    const isAuthenticated = await checkAuthStatus();
     const authRequired = document.querySelectorAll('.auth-required');
     const authButtons = document.getElementById('auth-buttons');
     
@@ -23,8 +31,8 @@ function updateNavigation() {
 }
 
 // Function to handle authentication-protected actions
-function handleAuthProtection() {
-    const isAuthenticated = checkAuthStatus();
+async function handleAuthProtection() {
+    const isAuthenticated = await checkAuthStatus();
     const authProtectedLinks = document.querySelectorAll('.auth-protected');
     
     authProtectedLinks.forEach(link => {
@@ -50,8 +58,8 @@ function showLoginModal() {
 }
 
 // Function to handle book detail views and swap requests
-function handleBookActions() {
-    const isAuthenticated = checkAuthStatus();
+async function handleBookActions() {
+    const isAuthenticated = await checkAuthStatus();
     
     // Handle book detail buttons
     const bookDetailButtons = document.querySelectorAll('.book-detail-btn, .swap-request-btn');
@@ -66,8 +74,8 @@ function handleBookActions() {
 }
 
 // Function to protect entire pages that require authentication
-function protectPage(allowedPages = []) {
-    const isAuthenticated = checkAuthStatus();
+async function protectPage(allowedPages = []) {
+    const isAuthenticated = await checkAuthStatus();
     const currentPath = window.location.pathname;
     
     // Pages that require authentication
@@ -87,14 +95,12 @@ function protectPage(allowedPages = []) {
         // Store the intended destination
         localStorage.setItem('redirectAfterLogin', currentPath);
         // Redirect to login
-        window.location.href = '/pages/login.html';
+        window.location.href = '/login';
     }
 }
 
 // Function to handle successful login
 function handleSuccessfulLogin() {
-    localStorage.setItem('isAuthenticated', 'true');
-    
     // Check if there's a redirect destination
     const redirectPath = localStorage.getItem('redirectAfterLogin');
     if (redirectPath) {
@@ -107,17 +113,16 @@ function handleSuccessfulLogin() {
 
 // Function to handle logout
 function handleLogout() {
-    localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('redirectAfterLogin');
-    window.location.href = '/';
+    window.location.href = '/logout';
 }
 
 // Initialize authentication when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    updateNavigation();
-    handleAuthProtection();
-    handleBookActions();
-    protectPage();
+window.addEventListener('DOMContentLoaded', async function() {
+    await updateNavigation();
+    await handleAuthProtection();
+    await handleBookActions();
+    await protectPage();
     
     // Handle logout button if present
     const logoutBtn = document.querySelector('a[href="/logout"]');
