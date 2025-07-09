@@ -7,6 +7,7 @@ package com.bookbuddy.bookbuddy.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,6 +23,7 @@ import org.springframework.security.web.SecurityFilterChain;
  * Unauthenticated users are automatically redirected to /login
  */
 
+@Profile("dev") // ← ONLY loads this config if profile = prod
 @Configuration //marks this class as a Spring config class
 @EnableWebSecurity //enables Spring Security support for the application
 public class SecurityConfig {

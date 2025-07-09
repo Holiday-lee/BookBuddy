@@ -38,6 +38,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                     
+                    <!-- sign up form with API POST type, end point: /register -->
                     <form action="/register" method="post" id="registrationForm">
                         <div class="mb-3">
                             <label for="firstName" class="form-label">First Name</label>
@@ -93,6 +94,8 @@
             document.getElementById('email').addEventListener('blur', function() {
                 const email = this.value;
                 if (email) {
+                    
+                    // ?email=${encodeURIComponent(email)}=> reates a query parameter/ encodeURIComponent() / ${email} = insert value of email
                     fetch(`/api/check-email?email=${encodeURIComponent(email)}`)
                         .then(response => response.json())
                         .then(exists => {
