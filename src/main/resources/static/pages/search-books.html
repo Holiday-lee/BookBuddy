@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Search Books - BookBuddy</title>
+        <link rel="icon" href="/images/bookbuddy_logo.png" type="image/png">
+
+        <!-- Bootstrap -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+        <!-- Custom CSS -->
+        <link rel="stylesheet" href="/css/stylesheet.css">
+    </head>
+    
+    <body>
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+            <div class="container-fluid ms-3">
+                <a class="navbar-brand" href="/">
+                    <img src="/images/bookbuddy_logo.png" alt="Logo" height="80">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navMenu">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="/pages/search-books.html">Search Books</a></li>
+                        
+                        <!-- Auth required links -->
+                        <li class="nav-item auth-required" style="display:none;"><a class="nav-link" href="/pages/list-book.html">List a Book</a></li>
+                        <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/my-received-requests.html">My Received Requests</a></li>
+                        <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/my-sent-requests.html">My Sent Requests</a></li>
+                        <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/chat.html">Chat</a></li>
+                        <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/swap-history.html">Swap History</a></li>
+                    </ul>
+                    
+                    <!-- Auth button-->
+                    <div class="d-flex">
+                        <div id="auth-buttons" class="auth-buttons">
+                            <a href="/pages/login.html" class="btn btn-outline-primary me-2">Login</a>
+                            <a href="/pages/register.html" class="btn btn-primary me-2">Sign Up</a>
+                        </div>
+                        
+                        <!--User dropdown-->
+                        <div id="user-menu" class="auth-required dropdown" style="display: none;">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <span id="user-name">User</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="/pages/profile.html"> 👤 My Profile</a></li>
+                                <li><a class="dropdown-item" href="/pages/my-books.html">📚 My Books</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/logout" > 🚪 Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>            
+        </nav>
+        
+        <!-- PAGE CONTENT -->
+        <div class="container mt-4 mb-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">Search Books</h4>
+                            <small>Find books available for swap in your area</small>
+                        </div>
+                        <div class="card-body">
+                            <!-- Search Form -->
+                            <form id="searchForm" class="mb-4">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="searchQuery" class="form-label">Search</label>
+                                        <input type="text" class="form-control" id="searchQuery" 
+                                               placeholder="Search by title, author, or genre">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="conditionFilter" class="form-label">Condition</label>
+                                        <select class="form-select" id="conditionFilter">
+                                            <option value="">Any condition</option>
+                                            <option value="New">New</option>
+                                            <option value="Like New">Like New</option>
+                                            <option value="Good">Good</option>
+                                            <option value="Fair">Fair</option>
+                                            <option value="Poor">Poor</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="radiusFilter" class="form-label">Radius (km)</label>
+                                        <select class="form-select" id="radiusFilter">
+                                            <option value="5">5 km</option>
+                                            <option value="10">10 km</option>
+                                            <option value="25">25 km</option>
+                                            <option value="50">50 km</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary">
+                                            🔍 Search Books
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary ms-2" id="useMyLocation">
+                                            📍 Use My Location
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                            
+                            <!-- Results Section -->
+                            <div id="searchResults">
+                                <div class="text-center text-muted">
+                                    <p>Search for books to find what's available in your area</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bootstrap -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        
+        <script>
+        let userLocation = null;
+        
+        document.addEventListener('DOMContentLoaded', function(){
+            checkAuthentication();
+            setupSearchForm();
+        });
+        
+        function checkAuthentication(){
+            fetch('/api/current-user')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.authenticated){
+                            document.querySelectorAll('.auth-required').forEach(el => el.style.display = 'block');
+                            document.getElementById('auth-buttons').style.display = 'none';
+                            document.getElementById('user-menu').style.display = 'block';
+                            document.getElementById('user-name').innerText = data.firstName || "User";
+                        } else {
+                            document.querySelectorAll('.auth-required').forEach(el => el.style.display = 'none');
+                            document.getElementById('auth-buttons').style.display = 'flex';
+                            document.getElementById('user-menu').style.display = 'none';
+                        }
+            })
+            .catch(error => {
+                    console.error('Auth check failed: ' + error);
+            });
+        }
+        
+        function setupSearchForm() {
+            const form = document.getElementById('searchForm');
+            const useLocationBtn = document.getElementById('useMyLocation');
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                performSearch();
+            });
+            
+            useLocationBtn.addEventListener('click', function() {
+                getCurrentLocation();
+            });
+        }
+        
+        function getCurrentLocation() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by this browser.');
+                return;
+            }
+            
+            const btn = document.getElementById('useMyLocation');
+            btn.disabled = true;
+            btn.innerHTML = '📍 Getting location...';
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    btn.disabled = false;
+                    btn.innerHTML = '📍 Use My Location';
+                    performSearch();
+                },
+                function(error) {
+                    alert('Unable to get your location. Please try again.');
+                    btn.disabled = false;
+                    btn.innerHTML = '📍 Use My Location';
+                }
+            );
+        }
+        
+        function performSearch() {
+            const query = document.getElementById('searchQuery').value;
+            const condition = document.getElementById('conditionFilter').value;
+            const radius = document.getElementById('radiusFilter').value;
+            
+            let url = '/books/api/search?q=' + encodeURIComponent(query);
+            
+            if (condition) {
+                url += '&condition=' + encodeURIComponent(condition);
+            }
+            
+            if (userLocation) {
+                url += `&lat=${userLocation.lat}&lng=${userLocation.lng}&radius=${radius}`;
+            }
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(books => {
+                    displayResults(books);
+                })
+                .catch(error => {
+                    console.error('Search failed:', error);
+                    document.getElementById('searchResults').innerHTML = 
+                        '<div class="alert alert-danger">Failed to search books. Please try again.</div>';
+                });
+        }
+        
+        function displayResults(books) {
+            const resultsContainer = document.getElementById('searchResults');
+            
+            if (books.length === 0) {
+                resultsContainer.innerHTML = '<div class="text-center text-muted"><p>No books found matching your criteria.</p></div>';
+                return;
+            }
+            
+            let html = '<div class="row g-3">';
+            
+            books.forEach(book => {
+                html += `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">${book.title}</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">${book.author}</h6>
+                                ${book.genre ? `<p class="card-text"><small class="text-muted">Genre: ${book.genre}</small></p>` : ''}
+                                <p class="card-text"><small class="text-muted">Condition: ${book.condition}</small></p>
+                                ${book.pickupLocation ? `<p class="card-text"><small class="text-muted">📍 ${book.pickupLocation}</small></p>` : ''}
+                                ${book.description ? `<p class="card-text">${book.description}</p>` : ''}
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn btn-primary btn-sm" onclick="requestBook(${book.id})">
+                                    📖 Request Book
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            resultsContainer.innerHTML = html;
+        }
+        
+        function requestBook(bookId) {
+            // This would be implemented when the request feature is added
+            alert('Request feature coming soon!');
+        }
+        </script>
+    </body>
+</html> 

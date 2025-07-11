@@ -178,29 +178,15 @@ public class BookService {
     }
     
     /**
-     * Mark book as unavailable (when swapped)
+     * Get all books owned by a specific user
      */
-    public Book markAsUnavailable(Long bookId) {
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + bookId));
-        
-        book.setAvailable(false);
-        return bookRepository.save(book);
+    @Transactional(readOnly = true)
+    public List<Book> getBooksByOwner(Long ownerId) {
+        return bookRepository.findByOwnerId(ownerId);
     }
     
     /**
-     * Mark book as available again
-     */
-    public Book markAsAvailable(Long bookId) {
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + bookId));
-        
-        book.setAvailable(true);
-        return bookRepository.save(book);
-    }
-    
-    /**
-     * Delete book (only by owner)
+     * Delete a book (only by owner)
      */
     public void deleteBook(Long bookId, Long ownerId) {
         Book book = bookRepository.findById(bookId)
@@ -211,6 +197,28 @@ public class BookService {
         }
         
         bookRepository.delete(book);
+    }
+    
+    /**
+     * Mark a book as available
+     */
+    public Book markAsAvailable(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + bookId));
+        
+        book.setAvailable(true);
+        return bookRepository.save(book);
+    }
+    
+    /**
+     * Mark a book as unavailable
+     */
+    public Book markAsUnavailable(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + bookId));
+        
+        book.setAvailable(false);
+        return bookRepository.save(book);
     }
     
     /**

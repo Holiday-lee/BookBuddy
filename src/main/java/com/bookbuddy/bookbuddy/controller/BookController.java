@@ -5,10 +5,14 @@
 package com.bookbuddy.bookbuddy.controller;
 
 import com.bookbuddy.bookbuddy.model.Book;
+import com.bookbuddy.bookbuddy.model.User;
 import com.bookbuddy.bookbuddy.service.BookService;
+import com.bookbuddy.bookbuddy.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -20,7 +24,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 /**
- *
+ * Controller for handling book-related operations
+ * Manages book listing, searching, and other book operations
  * @author holiday
  */
 @Controller
@@ -28,15 +33,18 @@ import org.springframework.http.ResponseEntity;
 public class BookController {
     
     private final BookService bookService;
+    private final UserService userService;
     
     @Autowired
-    public BookController(BookService bookService) {
+    public BookController(BookService bookService, UserService userService) {
         this.bookService = bookService;
+        this.userService = userService;
     }
     
     /**
      * Handle book listing form submission
      * Updated to match the frontend form fields and provide better error handling
+     * Uses Spring Security authentication instead of session attributes
      */
     @PostMapping("/list")
     public String listBook(@RequestParam("title") String title,
@@ -52,14 +60,25 @@ public class BookController {
                           RedirectAttributes redirectAttributes) {
         
         try {
-            // Get current user from session
-            Long userId = (Long) session.getAttribute("userId");
-            if (userId == null) {
+            // Get current user from Spring Security authentication
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated() || 
+                "anonymousUser".equals(authentication.getPrincipal())) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Please log in to list a book.");
                 return "redirect:/pages/login.html";
             }
             
-            // Parse coordinates
+            // Get user by email from authentication
+            String email = authentication.getName();
+            Optional<User> userOpt = userService.findByEmail(email);
+            if (userOpt.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "User not found. Please log in again.");
+                return "redirect:/pages/login.html";
+            }
+            
+            Long userId = userOpt.get().getId();
+            
+            // Parse coordinates - handle latitude and longitude parsing
             Double latitude = null;
             Double longitude = null;
             
@@ -67,7 +86,7 @@ public class BookController {
                 try {
                     latitude = Double.parseDouble(latitudeStr.trim());
                 } catch (NumberFormatException e) {
-                    // Invalid latitude format - ignore coordinates
+                    // Invalid latitude format - ignore coordinates but don't fail
                     latitude = null;
                 }
             }
@@ -76,25 +95,26 @@ public class BookController {
                 try {
                     longitude = Double.parseDouble(longitudeStr.trim());
                 } catch (NumberFormatException e) {
-                    // Invalid longitude format - ignore coordinates
+                    // Invalid longitude format - ignore coordinates but don't fail
                     longitude = null;
                 }
             }
             
-            // List the book
+            // List the book using the service layer
             Book newBook = bookService.listBook(title, author, genre, isbn, condition, 
                                                description, pickupLocation, latitude, longitude, userId);
             
-            // Success message
+            // Success message for user feedback
             redirectAttributes.addFlashAttribute("successMessage", 
                 "Book '" + newBook.getTitle() + "' has been listed successfully!");
             
             return "redirect:/pages/list-book.html?success=true";
             
         } catch (IllegalArgumentException e) {
+            // Handle validation errors from service layer
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             
-            // Keep form data for user convenience
+            // Keep form data for user convenience (so they don't have to re-enter everything)
             redirectAttributes.addFlashAttribute("title", title);
             redirectAttributes.addFlashAttribute("author", author);
             redirectAttributes.addFlashAttribute("genre", genre);
@@ -107,7 +127,7 @@ public class BookController {
                    java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
             
         } catch (Exception e) {
-            // Log the actual error for debugging
+            // Log the actual error for debugging purposes
             System.err.println("Error listing book: " + e.getMessage());
             e.printStackTrace();
             
@@ -121,6 +141,7 @@ public class BookController {
     
     /**
      * API endpoint for AJAX form submission (alternative approach)
+     * Returns JSON response instead of redirecting
      */
     @PostMapping("/api/list")
     @ResponseBody
@@ -136,20 +157,33 @@ public class BookController {
                                         HttpSession session) {
         
         try {
-            // Get current user from session
-            Long userId = (Long) session.getAttribute("userId");
-            if (userId == null) {
+            // Get current user from Spring Security authentication
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated() || 
+                "anonymousUser".equals(authentication.getPrincipal())) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
                 response.put("message", "Please log in to list a book.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
             
-            // Parse coordinates
+            // Get user by email from authentication
+            String email = authentication.getName();
+            Optional<User> userOpt = userService.findByEmail(email);
+            if (userOpt.isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "User not found. Please log in again.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+            
+            Long userId = userOpt.get().getId();
+            
+            // Parse coordinates with proper error handling
             Double latitude = null;
             Double longitude = null;
             
-                if (latitudeStr != null && !latitudeStr.trim().isEmpty()) {
+            if (latitudeStr != null && !latitudeStr.trim().isEmpty()) {
                 try {
                     latitude = Double.parseDouble(latitudeStr.trim());
                 } catch (NumberFormatException e) {
@@ -171,10 +205,11 @@ public class BookController {
                 }
             }
             
-            // List the book
+            // List the book using the service layer
             Book newBook = bookService.listBook(title, author, genre, isbn, condition, 
                                                description, pickupLocation, latitude, longitude, userId);
             
+            // Return success response with book details
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Book '" + newBook.getTitle() + "' has been listed successfully!");
@@ -184,6 +219,7 @@ public class BookController {
             return ResponseEntity.ok(response);
             
         } catch (IllegalArgumentException e) {
+            // Handle validation errors
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", e.getMessage());
@@ -205,6 +241,7 @@ public class BookController {
     
     /**
      * API: Get all available books
+     * Returns list of all books that are currently available for swap
      */
     @GetMapping("/api/all")
     @ResponseBody
@@ -214,6 +251,9 @@ public class BookController {
     
     /**
      * API: Search books
+     * Searches books by title, author, or genre
+     * @param query Search query string
+     * @return List of matching books
      */
     @GetMapping("/api/search")
     @ResponseBody
@@ -223,6 +263,11 @@ public class BookController {
     
     /**
      * API: Find books nearby
+     * Finds books within specified radius of given coordinates
+     * @param latitude User's latitude
+     * @param longitude User's longitude
+     * @param radius Search radius in kilometers
+     * @return List of books within radius
      */
     @GetMapping("/api/nearby")
     @ResponseBody
@@ -234,6 +279,9 @@ public class BookController {
     
     /**
      * API: Get book details
+     * Returns detailed information about a specific book
+     * @param id Book ID
+     * @return Book details or 404 if not found
      */
     @GetMapping("/api/{id}")
     @ResponseBody
@@ -247,31 +295,116 @@ public class BookController {
     }
     
     /**
-     * API: Get user's books
+     * API: Get current user's books
+     * Returns all books owned by the currently logged-in user
+     * @return List of user's books
      */
     @GetMapping("/api/my-books")
     @ResponseBody
-    public ResponseEntity<?> getMyBooks(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        if (userId == null) {
-            response.put("authenticated", false);
-            response.put("message", "Please log in");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    public ResponseEntity<?> getMyBooks() {
+        try {
+            // Get current user from Spring Security authentication
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated() || 
+                "anonymousUser".equals(authentication.getPrincipal())) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "Please log in to view your books.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+            
+            // Get user by email from authentication
+            String email = authentication.getName();
+            Optional<User> userOpt = userService.findByEmail(email);
+            if (userOpt.isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "User not found. Please log in again.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+            
+            Long userId = userOpt.get().getId();
+            
+            // Get user's books
+            List<Book> userBooks = bookService.getBooksByOwner(userId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("books", userBooks);
+            response.put("count", userBooks.size());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Failed to load your books.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        
-        List<Book> myBooks = bookService.findBooksByOwner(userId);
-        response.put("authenticated", true);
-        response.put("books", myBooks);
-        response.put("count", myBooks.size());
-        
-        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * API: Delete a book (only by owner)
+     * Allows users to delete their own books
+     * @param id Book ID
+     * @return Success/error response
+     */
+    @DeleteMapping("/api/{id}")
+    @ResponseBody
+    public ResponseEntity<?> deleteBook(@PathVariable Long id) {
+        try {
+            // Get current user from Spring Security authentication
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated() || 
+                "anonymousUser".equals(authentication.getPrincipal())) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "Please log in to delete books.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+            
+            // Get user by email from authentication
+            String email = authentication.getName();
+            Optional<User> userOpt = userService.findByEmail(email);
+            if (userOpt.isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "User not found. Please log in again.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+            
+            Long userId = userOpt.get().getId();
+            
+            // Delete the book (service will check ownership)
+            bookService.deleteBook(id, userId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Book deleted successfully.");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Failed to delete book.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
     
     /**
      * API: Update book availability
+     * Allows users to mark their books as available/unavailable
+     * @param id Book ID
+     * @param available New availability status
+     * @param session HTTP session
+     * @return Success/error response
      */
     @PostMapping("/api/{id}/availability")
     @ResponseBody
@@ -279,47 +412,70 @@ public class BookController {
                                                    @RequestParam("available") boolean available,
                                                    HttpSession session) {
         try {
-            Long userId = (Long) session.getAttribute("userId");
-            Map<String, Object> response = new HashMap<>();
-            
-            if (userId == null) {
+            // Get current user from Spring Security authentication
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated() || 
+                "anonymousUser".equals(authentication.getPrincipal())) {
+                Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
-                response.put("message", "Please log in");
+                response.put("message", "Please log in to update book availability.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
             
-            // Verify ownership
+            // Get user by email from authentication
+            String email = authentication.getName();
+            Optional<User> userOpt = userService.findByEmail(email);
+            if (userOpt.isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "User not found. Please log in again.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+            
+            Long userId = userOpt.get().getId();
+            
+            // Verify ownership before updating
             Optional<Book> bookOpt = bookService.findById(id);
             if (bookOpt.isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
-                response.put("message", "Book not found");
+                response.put("message", "Book not found.");
                 return ResponseEntity.notFound().build();
             }
             
             Book book = bookOpt.get();
             if (!book.getOwnerId().equals(userId)) {
+                Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
-                response.put("message", "You can only modify your own books");
+                response.put("message", "You can only modify your own books.");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
             
-            // Update availability
+            // Update book availability
+            Book updatedBook;
             if (available) {
-                book = bookService.markAsAvailable(id);
+                updatedBook = bookService.markAsAvailable(id);
             } else {
-                book = bookService.markAsUnavailable(id);
+                updatedBook = bookService.markAsUnavailable(id);
             }
             
+            Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "Book availability updated successfully");
-            response.put("book", book);
+            response.put("message", "Book availability updated successfully.");
+            response.put("book", updatedBook);
             
             return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
             
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
-            response.put("message", "Failed to update book availability");
+            response.put("message", "Failed to update book availability.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

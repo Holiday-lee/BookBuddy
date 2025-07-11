@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>My Profile - BookBuddy</title>
+        <link rel="icon" href="/images/bookbuddy_logo.png" type="image/png">
+
+        <!-- Bootstrap -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+        <!-- Custom CSS -->
+        <link rel="stylesheet" href="/css/stylesheet.css">
+    </head>
+    
+    <body>
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+            <div class="container-fluid ms-3">
+                <a class="navbar-brand" href="/">
+                    <img src="/images/bookbuddy_logo.png" alt="Logo" height="80">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navMenu">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/pages/search-books.html">Search Books</a></li>
+                        
+                        <!-- Auth required links -->
+                        <li class="nav-item auth-required" style="display:none;"><a class="nav-link" href="/pages/list-book.html">List a Book</a></li>
+                        <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/my-received-requests.html">My Received Requests</a></li>
+                        <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/my-sent-requests.html">My Sent Requests</a></li>
+                        <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/chat.html">Chat</a></li>
+                        <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/swap-history.html">Swap History</a></li>
+                    </ul>
+                    
+                    <!-- Auth button-->
+                    <div class="d-flex">
+                        <div id="auth-buttons" class="auth-buttons">
+                            <a href="/pages/login.html" class="btn btn-outline-primary me-2">Login</a>
+                            <a href="/pages/register.html" class="btn btn-primary me-2">Sign Up</a>
+                        </div>
+                        
+                        <!--User dropdown-->
+                        <div id="user-menu" class="auth-required dropdown" style="display: none;">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <span id="user-name">User</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item active" href="/pages/profile.html"> 👤 My Profile</a></li>
+                                <li><a class="dropdown-item" href="/pages/my-books.html">📚 My Books</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/logout" > 🚪 Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>            
+        </nav>
+        
+        <!-- PAGE CONTENT -->
+        <div class="container mt-4 mb-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">👤 My Profile</h4>
+                            <small>Manage your account information</small>
+                        </div>
+                        <div class="card-body">
+                            <!-- Alert Messages -->
+                            <div id="alertContainer"></div>
+                            
+                            <!-- Loading Spinner -->
+                            <div id="loadingSpinner" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Loading your profile...</p>
+                            </div>
+                            
+                            <!-- Profile Form -->
+                            <div id="profileForm" style="display: none;">
+                                <form id="updateProfileForm">
+                                    <!-- First Name -->
+                                    <div class="mb-3">
+                                        <label for="firstName" class="form-label">First Name *</label>
+                                        <input type="text" class="form-control" id="firstName" name="firstName" required>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    
+                                    <!-- Last Name -->
+                                    <div class="mb-3">
+                                        <label for="lastName" class="form-label">Last Name *</label>
+                                        <input type="text" class="form-control" id="lastName" name="lastName" required>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    
+                                    <!-- Email (Read-only) -->
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="email" readonly>
+                                        <div class="form-text">Email cannot be changed</div>
+                                    </div>
+                                    
+                                    <!-- Member Since -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Member Since</label>
+                                        <input type="text" class="form-control" id="memberSince" readonly>
+                                    </div>
+                                    
+                                    <!-- Submit Button -->
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary" id="updateBtn">
+                                            <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
+                                            💾 Update Profile
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <!-- Change Password Section -->
+                                <hr class="my-4">
+                                <h5>🔐 Change Password</h5>
+                                <form id="changePasswordForm">
+                                    <!-- Current Password -->
+                                    <div class="mb-3">
+                                        <label for="currentPassword" class="form-label">Current Password *</label>
+                                        <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    
+                                    <!-- New Password -->
+                                    <div class="mb-3">
+                                        <label for="newPassword" class="form-label">New Password *</label>
+                                        <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    
+                                    <!-- Confirm New Password -->
+                                    <div class="mb-3">
+                                        <label for="confirmPassword" class="form-label">Confirm New Password *</label>
+                                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    
+                                    <!-- Submit Button -->
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-warning" id="changePasswordBtn">
+                                            <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
+                                            🔐 Change Password
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bootstrap -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        
+        <script>
+        // Global variables
+        let userProfile = null;
+        
+        // Check authentication and setup page
+        document.addEventListener('DOMContentLoaded', function(){
+            checkAuthentication();
+            loadUserProfile();
+            setupFormHandling();
+        });
+        
+        // Authentication check
+        function checkAuthentication(){
+            fetch('/api/current-user')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.authenticated){
+                            // finds ALL elements on the page that match a CSS selector: auth-required
+                            document.querySelectorAll('.auth-required').forEach(el => el.style.display = 'block'); //elements with class auth-required become visible
+                            document.getElementById('auth-buttons').style.display = 'none'; // hide auth-buttons("Login", "Sign Up") 
+                            document.getElementById('user-menu').style.display = 'block'; //show user menu
+                            document.getElementById('user-name').innerText = data.firstName || "User"; //show user first name or "User" as fallback
+                        } else {
+                            //redirect to login if not authenticated
+                            window.location.href = '/pages/login.html';
+                        }
+            })
+            .catch(error => {
+                    console.error('Auth check failed: ' + error); //logs the error if any failed issues
+                    window.location.href = '/pages/login.html';
+            });
+        }
+        
+        // Load user profile from the server
+        function loadUserProfile() {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const profileForm = document.getElementById('profileForm');
+            
+            fetch('/api/current-user')
+                .then(response => response.json())
+                .then(data => {
+                    loadingSpinner.style.display = 'none';
+                    profileForm.style.display = 'block';
+                    
+                    if (data.authenticated) {
+                        userProfile = data;
+                        populateProfileForm(data);
+                    } else {
+                        showAlert('danger', 'Failed to load profile');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading profile:', error);
+                    loadingSpinner.style.display = 'none';
+                    profileForm.style.display = 'block';
+                    showAlert('danger', 'Failed to load profile. Please try again.');
+                });
+        }
+        
+        // Populate the form with user data
+        function populateProfileForm(userData) {
+            document.getElementById('firstName').value = userData.firstName || '';
+            document.getElementById('lastName').value = userData.lastName || '';
+            document.getElementById('email').value = userData.email || '';
+            
+            // Set member since date (you might need to add this to your API)
+            const memberSince = userData.createdAt ? new Date(userData.createdAt) : new Date();
+            document.getElementById('memberSince').value = memberSince.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+        
+        // Setup form handling
+        function setupFormHandling() {
+            const updateForm = document.getElementById('updateProfileForm');
+            const changePasswordForm = document.getElementById('changePasswordForm');
+            
+            // Handle profile update
+            updateForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                updateProfile();
+            });
+            
+            // Handle password change
+            changePasswordForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                changePassword();
+            });
+        }
+        
+        // Update user profile
+        function updateProfile() {
+            const updateBtn = document.getElementById('updateBtn');
+            const spinner = updateBtn.querySelector('.spinner-border');
+            
+            // Clear validation
+            clearValidation();
+            
+            // Show loading
+            updateBtn.disabled = true;
+            spinner.classList.remove('d-none');
+            
+            const formData = new FormData();
+            formData.append('firstName', document.getElementById('firstName').value);
+            formData.append('lastName', document.getElementById('lastName').value);
+            
+            fetch('/api/update-profile', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', 'Profile updated successfully!');
+                    // Update the user name in the navbar
+                    document.getElementById('user-name').innerText = data.firstName || "User";
+                } else {
+                    showAlert('danger', data.message || 'Failed to update profile');
+                    
+                    if (data.errors) {
+                        Object.keys(data.errors).forEach(field => {
+                            showFieldError(field, data.errors[field]);
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error updating profile:', error);
+                showAlert('danger', 'Failed to update profile. Please try again.');
+            })
+            .finally(() => {
+                updateBtn.disabled = false;
+                spinner.classList.add('d-none');
+            });
+        }
+        
+        // Change user password
+        function changePassword() {
+            const changePasswordBtn = document.getElementById('changePasswordBtn');
+            const spinner = changePasswordBtn.querySelector('.spinner-border');
+            
+            // Clear validation
+            clearValidation();
+            
+            // Validate password confirmation
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (newPassword !== confirmPassword) {
+                showFieldError('confirmPassword', 'Passwords do not match');
+                return;
+            }
+            
+            // Show loading
+            changePasswordBtn.disabled = true;
+            spinner.classList.remove('d-none');
+            
+            const formData = new FormData();
+            formData.append('currentPassword', document.getElementById('currentPassword').value);
+            formData.append('newPassword', newPassword);
+            
+            fetch('/api/change-password', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', 'Password changed successfully!');
+                    // Clear the password form
+                    document.getElementById('changePasswordForm').reset();
+                } else {
+                    showAlert('danger', data.message || 'Failed to change password');
+                    
+                    if (data.errors) {
+                        Object.keys(data.errors).forEach(field => {
+                            showFieldError(field, data.errors[field]);
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error changing password:', error);
+                showAlert('danger', 'Failed to change password. Please try again.');
+            })
+            .finally(() => {
+                changePasswordBtn.disabled = false;
+                spinner.classList.add('d-none');
+            });
+        }
+        
+        // Utility functions
+        function showAlert(type, message) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            alertContainer.appendChild(alertDiv);
+
+            // Auto-hide success alerts after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+        }
+        
+        function showFieldError(fieldName, message) {
+            const field = document.getElementById(fieldName);
+            if (field) {
+                field.classList.add('is-invalid');
+                const feedback = field.parentNode.querySelector('.invalid-feedback');
+                if (feedback) {
+                    feedback.textContent = message;
+                }
+            }
+        }
+        
+        function clearValidation() {
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+        }
+        </script>
+    </body>
+</html> 
