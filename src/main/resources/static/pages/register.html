@@ -71,6 +71,7 @@
                         <button type="submit" class="btn btn-secondary">Sign Up</button>
                         <a href="/pages/login.html" class="btn btn-link">Already have an account? Login</a>
                     </form>
+                    
                 </div>
             </div>
         </div>
@@ -80,6 +81,7 @@
         
         <script>
             // Check for flash messages from URL parameters (if using redirectAttributes)
+            // window.location.search is a query to check where is the current page's URL (after?)
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('success')) {
                 document.getElementById('successText').textContent = decodeURIComponent(urlParams.get('success'));
