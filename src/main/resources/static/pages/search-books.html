@@ -215,7 +215,9 @@
             fetch(url)
                 .then(response => response.json())
                 .then(books => {
-                    displayResults(books);
+                    // Handle both array response and object response
+                    const bookList = Array.isArray(books) ? books : (books.books || []);
+                    displayResults(bookList);
                 })
                 .catch(error => {
                     console.error('Search failed:', error);
@@ -235,19 +237,29 @@
             let html = '<div class="row g-3">';
             
             books.forEach(book => {
+                const sharingTypeDisplay = book.sharingType ? book.sharingType.replace('_', ' ') : 'Unknown';
+                const statusBadge = book.status === 'AVAILABLE' ? 
+                    '<span class="badge bg-success">Available</span>' : 
+                    '<span class="badge bg-secondary">' + book.status + '</span>';
+                
                 html += `
                     <div class="col-md-6 col-lg-4">
                         <div class="card h-100">
                             <div class="card-body">
-                                <h5 class="card-title">${book.title}</h5>
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title mb-0">${book.title}</h5>
+                                    ${statusBadge}
+                                </div>
                                 <h6 class="card-subtitle mb-2 text-muted">${book.author}</h6>
                                 ${book.genre ? `<p class="card-text"><small class="text-muted">Genre: ${book.genre}</small></p>` : ''}
                                 <p class="card-text"><small class="text-muted">Condition: ${book.condition}</small></p>
-                                ${book.pickupLocation ? `<p class="card-text"><small class="text-muted">📍 ${book.pickupLocation}</small></p>` : ''}
+                                <p class="card-text"><small class="text-muted">📚 ${sharingTypeDisplay}</small></p>
+                                ${book.lendingDurationDays ? `<p class="card-text"><small class="text-muted">⏱️ Max ${book.lendingDurationDays} days</small></p>` : ''}
+                                ${book.displayLocation ? `<p class="card-text"><small class="text-muted">📍 ${book.displayLocation}</small></p>` : ''}
                                 ${book.description ? `<p class="card-text">${book.description}</p>` : ''}
                             </div>
                             <div class="card-footer">
-                                <button class="btn btn-primary btn-sm" onclick="requestBook(${book.id})">
+                                <button class="btn btn-primary btn-sm" onclick="requestBook(${book.id})" ${book.status !== 'AVAILABLE' ? 'disabled' : ''}>
                                     📖 Request Book
                                 </button>
                             </div>

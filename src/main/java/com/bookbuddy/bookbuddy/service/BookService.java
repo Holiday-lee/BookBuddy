@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
  *
  * @author holiday
  */
-
 @Service
 @Transactional
 public class BookService {
@@ -36,10 +35,11 @@ public class BookService {
      */
     public Book listBook(String title, String author, String genre, String isbn, 
                         String condition, String description, String pickupLocation,
-                        Double pickupLatitude, Double pickupLongitude, Long ownerId) {
+                        Double pickupLatitude, Double pickupLongitude, Long ownerId,
+                        Book.SharingType sharingType, Integer lendingDurationDays) {
         
         // Validate required fields
-        validateBookInput(title, author, condition, ownerId);
+        validateBookInput(title, author, condition, ownerId, sharingType);
         
         // Create new book
         Book book = new Book();
@@ -53,7 +53,17 @@ public class BookService {
         book.setPickupLatitude(pickupLatitude);
         book.setPickupLongitude(pickupLongitude);
         book.setOwnerId(ownerId);
-        book.setAvailable(true);
+        book.setSharingType(sharingType);
+        book.setStatus(Book.BookStatus.AVAILABLE);
+        book.setAvailable(true); // Set legacy field for database compatibility
+        
+        // Set lending duration for lend books
+        if (sharingType == Book.SharingType.LEND) {
+            if (lendingDurationDays == null || lendingDurationDays <= 0) {
+                throw new IllegalArgumentException("Lending duration is required for lend books");
+            }
+            book.setLendingDurationDays(lendingDurationDays);
+        }
         
         return bookRepository.save(book);
     }
@@ -71,7 +81,15 @@ public class BookService {
      */
     @Transactional(readOnly = true)
     public List<Book> findAllAvailableBooks() {
-        return bookRepository.findByAvailableTrue();
+        return bookRepository.findByStatus(Book.BookStatus.AVAILABLE);
+    }
+    
+    /**
+     * Find all books (for debugging)
+     */
+    @Transactional(readOnly = true)
+    public List<Book> findAllBooks() {
+        return bookRepository.findAll();
     }
     
     /**
@@ -87,7 +105,7 @@ public class BookService {
      */
     @Transactional(readOnly = true)
     public List<Book> findAvailableBooksByOwner(Long ownerId) {
-        return bookRepository.findByOwnerIdAndAvailableTrue(ownerId);
+        return bookRepository.findByOwnerIdAndStatus(ownerId, Book.BookStatus.AVAILABLE);
     }
     
     /**
@@ -118,12 +136,13 @@ public class BookService {
      * Advanced search with multiple criteria
      */
     @Transactional(readOnly = true)
-    public List<Book> findBooksByCriteria(String title, String author, String genre, String condition) {
+    public List<Book> findBooksByCriteria(String title, String author, String genre, String condition, Book.SharingType sharingType) {
         return bookRepository.findBooksByCriteria(
             isNullOrEmpty(title) ? null : title,
             isNullOrEmpty(author) ? null : author,
             isNullOrEmpty(genre) ? null : genre,
-            isNullOrEmpty(condition) ? null : condition
+            isNullOrEmpty(condition) ? null : condition,
+            sharingType
         );
     }
     
@@ -178,15 +197,73 @@ public class BookService {
     }
     
     /**
-     * Get all books owned by a specific user
+     * Mark book as unavailable (when request is made)
      */
-    @Transactional(readOnly = true)
-    public List<Book> getBooksByOwner(Long ownerId) {
-        return bookRepository.findByOwnerId(ownerId);
+    public Book markAsUnavailable(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + bookId));
+        
+        book.setStatus(Book.BookStatus.UNAVAILABLE);
+        return bookRepository.save(book);
     }
     
     /**
-     * Delete a book (only by owner)
+     * Mark book as available again
+     */
+    public Book markAsAvailable(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + bookId));
+        
+        book.setStatus(Book.BookStatus.AVAILABLE);
+        return bookRepository.save(book);
+    }
+    
+    /**
+     * Mark book as exchange in progress
+     */
+    public Book markAsExchangeInProgress(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + bookId));
+        
+        book.setStatus(Book.BookStatus.EXCHANGE_IN_PROGRESS);
+        return bookRepository.save(book);
+    }
+    
+    /**
+     * Mark book as currently lent out
+     */
+    public Book markAsCurrentlyLentOut(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + bookId));
+        
+        book.setStatus(Book.BookStatus.CURRENTLY_LENT_OUT);
+        return bookRepository.save(book);
+    }
+    
+    /**
+     * Mark book as given away
+     */
+    public Book markAsGivenAway(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + bookId));
+        
+        book.setStatus(Book.BookStatus.GIVEN_AWAY);
+        return bookRepository.save(book);
+    }
+    
+    /**
+     * Mark book as traded
+     */
+    public Book markAsTraded(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + bookId));
+        
+        book.setStatus(Book.BookStatus.TRADED);
+        return bookRepository.save(book);
+    }
+    
+    /**
+     * Delete book (only by owner)
      */
     public void deleteBook(Long bookId, Long ownerId) {
         Book book = bookRepository.findById(bookId)
@@ -197,28 +274,6 @@ public class BookService {
         }
         
         bookRepository.delete(book);
-    }
-    
-    /**
-     * Mark a book as available
-     */
-    public Book markAsAvailable(Long bookId) {
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + bookId));
-        
-        book.setAvailable(true);
-        return bookRepository.save(book);
-    }
-    
-    /**
-     * Mark a book as unavailable
-     */
-    public Book markAsUnavailable(Long bookId) {
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + bookId));
-        
-        book.setAvailable(false);
-        return bookRepository.save(book);
     }
     
     /**
@@ -234,16 +289,48 @@ public class BookService {
      */
     @Transactional(readOnly = true)
     public BookStats getBookStats() {
-        long totalBooks = bookRepository.countByAvailableTrue();
+        long totalBooks = bookRepository.countByStatus(Book.BookStatus.AVAILABLE);
         List<Book> booksWithLocation = bookRepository.findBooksWithLocation();
         
         return new BookStats(totalBooks, booksWithLocation.size());
     }
     
     /**
+     * Find books available for give away
+     */
+    @Transactional(readOnly = true)
+    public List<Book> findAvailableGiveAwayBooks() {
+        return bookRepository.findAvailableGiveAwayBooks();
+    }
+    
+    /**
+     * Find books available for lending
+     */
+    @Transactional(readOnly = true)
+    public List<Book> findAvailableLendBooks() {
+        return bookRepository.findAvailableLendBooks();
+    }
+    
+    /**
+     * Find books available for trading
+     */
+    @Transactional(readOnly = true)
+    public List<Book> findAvailableTradeBooks() {
+        return bookRepository.findAvailableTradeBooks();
+    }
+    
+    /**
+     * Find tradeable books by owner (for trade requests)
+     */
+    @Transactional(readOnly = true)
+    public List<Book> findTradeableBooksByOwner(Long ownerId) {
+        return bookRepository.findTradeableBooksByOwner(ownerId);
+    }
+    
+    /**
      * Validate book input
      */
-    private void validateBookInput(String title, String author, String condition, Long ownerId) {
+    private void validateBookInput(String title, String author, String condition, Long ownerId, Book.SharingType sharingType) {
         if (title == null || title.trim().isEmpty()) {
             throw new IllegalArgumentException("Title is required");
         }
@@ -256,18 +343,8 @@ public class BookService {
         if (ownerId == null) {
             throw new IllegalArgumentException("Owner ID is required");
         }
-        
-        // Validate condition values
-        String[] validConditions = {"New", "Like New", "Good", "Fair", "Poor"};
-        boolean validCondition = false;
-        for (String validCond : validConditions) {
-            if (validCond.equalsIgnoreCase(condition.trim())) {
-                validCondition = true;
-                break;
-            }
-        }
-        if (!validCondition) {
-            throw new IllegalArgumentException("Invalid condition. Must be: New, Like New, Good, Fair, or Poor");
+        if (sharingType == null) {
+            throw new IllegalArgumentException("Sharing type is required");
         }
     }
     
@@ -278,9 +355,6 @@ public class BookService {
         return str == null || str.trim().isEmpty();
     }
     
-    /**
-     * Inner class for book statistics
-     */
     public static class BookStats {
         private final long totalBooks;
         private final long booksWithLocation;

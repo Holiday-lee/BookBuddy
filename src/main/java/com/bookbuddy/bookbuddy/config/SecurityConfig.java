@@ -40,6 +40,7 @@ public class SecurityConfig {
                 // Public search functionality 
                 .requestMatchers("/pages/search-books.html").permitAll()
                 .requestMatchers("/search/**", "/api/books/search/**", "/api/books/nearby").permitAll()
+                .requestMatchers("/books/api/all", "/books/api/search", "/books/api/nearby", "/books/api/give-away", "/books/api/lend", "/books/api/trade", "/books/api/debug/all").permitAll()
                 
                 // Protected pages - require authentication
                 .requestMatchers("/pages/dashboard.html", "/pages/list-book.html", 
@@ -50,6 +51,7 @@ public class SecurityConfig {
                 
                 // Protected API endpoints
                 .requestMatchers("/api/books/create", "/api/books/update/**", "/api/books/delete/**").authenticated()
+                .requestMatchers("/books/list", "/books/api/my-books", "/books/api/*/availability", "/books/api/*").authenticated()
                 .requestMatchers("/api/requests/**", "/api/chat/**", "/api/profile/**", "/api/user/**").authenticated()
                 
                 // All other requests require authentication

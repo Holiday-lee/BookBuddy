@@ -13,7 +13,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 /**
  * Book entity for BookBuddy application
- * Represents books that users want to swap
+ * Represents books that users want to share (give away, lend, or trade)
  * @author holiday
  */
 @Entity
@@ -62,13 +62,26 @@ public class Book {
     @Column(name = "pickup_location", length = 200)
     private String pickupLocation; // Human-readable address/description
     
-    // Book availability status
-    @Column(nullable = false)
-    private Boolean available = true;
+    // New fields for sharing functionality
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sharing_type", nullable = false)
+    private SharingType sharingType;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private BookStatus status = BookStatus.AVAILABLE;
+    
+    // For lending: maximum lending period in days
+    @Column(name = "lending_duration_days")
+    private Integer lendingDurationDays;
     
     // Owner of the book (foreign key to User)
     @Column(name = "owner_id", nullable = false)
     private Long ownerId;
+    
+    // Legacy field for database compatibility (deprecated)
+    @Column(name = "available")
+    private Boolean available;
     
     // Optional: Image URL for the book
     @Size(max = 500, message = "Image URL must be less than 500 characters")
@@ -83,18 +96,55 @@ public class Book {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
+    // Enums for sharing types and status
+    public enum SharingType {
+        GIVE_AWAY("Give Away"),
+        LEND("Lend for Specific Period"),
+        TRADE("Trade");
+        
+        private final String displayName;
+        
+        SharingType(String displayName) {
+            this.displayName = displayName;
+        }
+        
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+    
+    public enum BookStatus {
+        AVAILABLE("Available"),
+        UNAVAILABLE("Unavailable"),
+        EXCHANGE_IN_PROGRESS("Exchange in Progress"),
+        CURRENTLY_LENT_OUT("Currently Lent Out"),
+        GIVEN_AWAY("Given Away"),
+        TRADED("Traded");
+        
+        private final String displayName;
+        
+        BookStatus(String displayName) {
+            this.displayName = displayName;
+        }
+        
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+    
     // Default constructor
     public Book() {
-        this.available = true;
+        this.status = BookStatus.AVAILABLE;
     }
     
     // Constructor with required fields
-    public Book(String title, String author, String condition, Long ownerId) {
+    public Book(String title, String author, String condition, Long ownerId, SharingType sharingType) {
         this();
         this.title = title;
         this.author = author;
         this.condition = condition;
         this.ownerId = ownerId;
+        this.sharingType = sharingType;
     }
     
     // Getters and Setters
@@ -178,12 +228,28 @@ public class Book {
         this.pickupLocation = pickupLocation;
     }
     
-    public Boolean getAvailable() {
-        return available;
+    public SharingType getSharingType() {
+        return sharingType;
     }
     
-    public void setAvailable(Boolean available) {
-        this.available = available;
+    public void setSharingType(SharingType sharingType) {
+        this.sharingType = sharingType;
+    }
+    
+    public BookStatus getStatus() {
+        return status;
+    }
+    
+    public void setStatus(BookStatus status) {
+        this.status = status;
+    }
+    
+    public Integer getLendingDurationDays() {
+        return lendingDurationDays;
+    }
+    
+    public void setLendingDurationDays(Integer lendingDurationDays) {
+        this.lendingDurationDays = lendingDurationDays;
     }
     
     public Long getOwnerId() {
@@ -218,6 +284,15 @@ public class Book {
         this.updatedAt = updatedAt;
     }
     
+    // Legacy getter/setter for database compatibility
+    public Boolean getAvailable() {
+        return available;
+    }
+    
+    public void setAvailable(Boolean available) {
+        this.available = available;
+    }
+    
     // Utility methods
     public boolean hasLocation() {
         return pickupLatitude != null && pickupLongitude != null;
@@ -249,12 +324,41 @@ public class Book {
         double deltaLatRad = Math.toRadians(latitude - this.pickupLatitude);
         double deltaLngRad = Math.toRadians(longitude - this.pickupLongitude);
         
-        double a = Math.sin(deltaLatRad/2) * Math.sin(deltaLatRad/2) +
+        double a = Math.sin(deltaLatRad / 2) * Math.sin(deltaLatRad / 2) +
                    Math.cos(lat1Rad) * Math.cos(lat2Rad) *
-                   Math.sin(deltaLngRad/2) * Math.sin(deltaLngRad/2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                   Math.sin(deltaLngRad / 2) * Math.sin(deltaLngRad / 2);
+        
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         
         return R * c;
+    }
+    
+    /**
+     * Check if book is available for requests
+     */
+    public boolean isAvailableForRequests() {
+        return status == BookStatus.AVAILABLE;
+    }
+    
+    /**
+     * Check if book can be given away
+     */
+    public boolean canBeGivenAway() {
+        return sharingType == SharingType.GIVE_AWAY && status == BookStatus.AVAILABLE;
+    }
+    
+    /**
+     * Check if book can be lent
+     */
+    public boolean canBeLent() {
+        return sharingType == SharingType.LEND && status == BookStatus.AVAILABLE;
+    }
+    
+    /**
+     * Check if book can be traded
+     */
+    public boolean canBeTraded() {
+        return sharingType == SharingType.TRADE && status == BookStatus.AVAILABLE;
     }
     
     @Override
@@ -263,12 +367,9 @@ public class Book {
                 "id=" + id +
                 ", title='" + title + '\'' +
                 ", author='" + author + '\'' +
-                ", genre='" + genre + '\'' +
-                ", condition='" + condition + '\'' +
-                ", available=" + available +
+                ", sharingType=" + sharingType +
+                ", status=" + status +
                 ", ownerId=" + ownerId +
-                ", hasLocation=" + hasLocation() +
-                ", createdAt=" + createdAt +
                 '}';
     }
     

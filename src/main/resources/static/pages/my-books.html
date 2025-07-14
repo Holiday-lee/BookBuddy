@@ -187,11 +187,12 @@
             let html = '<div class="row g-4">';
             
             books.forEach(book => {
-                const statusBadge = book.available ? 
+                const isAvailable = book.status === 'AVAILABLE';
+                const statusBadge = isAvailable ? 
                     '<span class="badge bg-success">Available</span>' : 
-                    '<span class="badge bg-secondary">Unavailable</span>';
+                    '<span class="badge bg-secondary">' + book.status + '</span>';
                 
-                const statusButton = book.available ?
+                const statusButton = isAvailable ?
                     `<button class="btn btn-outline-warning btn-sm" onclick="toggleAvailability(${book.id}, false)">
                         🔒 Make Unavailable
                     </button>` :
@@ -211,7 +212,9 @@
                                 ${book.genre ? `<p class="card-text"><small class="text-muted">Genre: ${book.genre}</small></p>` : ''}
                                 ${book.isbn ? `<p class="card-text"><small class="text-muted">ISBN: ${book.isbn}</small></p>` : ''}
                                 <p class="card-text"><small class="text-muted">Condition: ${book.condition}</small></p>
-                                ${book.pickupLocation ? `<p class="card-text"><small class="text-muted">📍 ${book.pickupLocation}</small></p>` : ''}
+                                <p class="card-text"><small class="text-muted">📚 ${book.sharingType ? book.sharingType.replace('_', ' ') : 'Unknown'}</small></p>
+                                ${book.lendingDurationDays ? `<p class="card-text"><small class="text-muted">⏱️ Max ${book.lendingDurationDays} days</small></p>` : ''}
+                                ${book.displayLocation ? `<p class="card-text"><small class="text-muted">📍 ${book.displayLocation}</small></p>` : ''}
                                 ${book.description ? `<p class="card-text">${book.description}</p>` : ''}
                                 <p class="card-text"><small class="text-muted">Listed: ${formatDate(book.createdAt)}</small></p>
                             </div>

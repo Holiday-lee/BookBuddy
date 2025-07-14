@@ -135,6 +135,31 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                                               placeholder="Brief description of the book (optional)"></textarea>
                                 </div>
                                 
+                                <!-- Sharing Type Section -->
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-primary">📚 Sharing Type</h6>
+                                    
+                                    <div class="mb-3">
+                                        <label for="sharingType" class="form-label">How would you like to share this book? *</label>
+                                        <select class="form-select" id="sharingType" name="sharingType" required>
+                                            <option value="">Select sharing type</option>
+                                            <option value="GIVE_AWAY">Give Away</option>
+                                            <option value="LEND">Lend for Specific Period</option>
+                                            <option value="TRADE">Trade</option>
+                                        </select>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    
+                                    <!-- Lending Duration (shown only for LEND type) -->
+                                    <div class="mb-3" id="lendingDurationSection" style="display: none;">
+                                        <label for="lendingDurationDays" class="form-label">Maximum Lending Period (days) *</label>
+                                        <input type="number" class="form-control" id="lendingDurationDays" name="lendingDurationDays"
+                                               placeholder="e.g., 14" min="1" max="365">
+                                        <div class="form-text">How long can someone borrow this book?</div>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                
                                 <!-- Location Section-->
                                 <div class="mb-4">
                                     <h6 class="fw-bold text-primary" >📍 Pickup Location</h6>
@@ -207,6 +232,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             checkAuthentication();
             setupFormHandling(); // set up for form submission logic
             setupLocationFeatures(); // set up map location features
+            setupSharingTypeFeatures(); // set up sharing type features
             
             // check if the URL has special paramaters like: 
             const urlParams = new URLSearchParams(window.location.search);
@@ -264,13 +290,23 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                 submitBtn.disabled = true; //disable submit button(prevet double-clickin)
                 spinner.classList.remove('d-none'); // removes d-none(display:none) = show spiiner
                 
-                // prepare form data
-                const formData = new FormData(form); //create FormData object with all form field values
+                // prepare form data as URL-encoded string
+                const formData = new URLSearchParams();
+                const formElements = form.elements;
+                for (let i = 0; i < formElements.length; i++) {
+                    const element = formElements[i];
+                    if (element.name && element.value) {
+                        formData.append(element.name, element.value);
+                    }
+                }
                 
                 // submit form
                 fetch('/books/list', {
                     method: 'POST',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString()
                 })
                 
                 //response handling
@@ -321,6 +357,24 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
         function setupLocationFeatures() {
             document.getElementById('getCurrentLocation').addEventListener('click', getCurrentLocation);
             document.getElementById('selectOnMap').addEventListener('click', toggleMap);
+        }
+        
+        // Sharing type features
+        function setupSharingTypeFeatures() {
+            const sharingTypeSelect = document.getElementById('sharingType');
+            const lendingDurationSection = document.getElementById('lendingDurationSection');
+            const lendingDurationInput = document.getElementById('lendingDurationDays');
+            
+            sharingTypeSelect.addEventListener('change', function() {
+                if (this.value === 'LEND') {
+                    lendingDurationSection.style.display = 'block';
+                    lendingDurationInput.required = true;
+                } else {
+                    lendingDurationSection.style.display = 'none';
+                    lendingDurationInput.required = false;
+                    lendingDurationInput.value = '';
+                }
+            });
         }
 
         function getCurrentLocation() {
