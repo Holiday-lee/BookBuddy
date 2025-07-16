@@ -72,8 +72,15 @@ public class AuthController {
      */
     @GetMapping("/api/current-user")
     @ResponseBody
-    public Map<String, Object> getCurrentUser() {
+    public Map<String, Object> getCurrentUser(HttpSession session) {
         Map<String, Object> response = new HashMap<>();
+        
+        // Debug session information
+        System.out.println("=== Session Debug ===");
+        System.out.println("Session ID: " + session.getId());
+        System.out.println("Session Creation Time: " + new java.util.Date(session.getCreationTime()));
+        System.out.println("Session Last Accessed Time: " + new java.util.Date(session.getLastAccessedTime()));
+        System.out.println("Session Max Inactive Interval: " + session.getMaxInactiveInterval());
         
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
@@ -91,14 +98,24 @@ public class AuthController {
                 response.put("lastName", user.getLastName());
                 response.put("userId", user.getId());
                 response.put("createdAt", user.getCreatedAt());
+                System.out.println("User authenticated: " + user.getEmail());
             } else {
                 response.put("authenticated", false);
                 response.put("message", "User not found");
+                System.out.println("User not found in database");
             }
         } else {
             response.put("authenticated", false);
             response.put("message", "Not logged in");
+            System.out.println("Not authenticated or anonymous user");
+            if (authentication != null) {
+                System.out.println("Authentication principal: " + authentication.getPrincipal());
+                System.out.println("Authentication name: " + authentication.getName());
+                System.out.println("Authentication authenticated: " + authentication.isAuthenticated());
+            }
         }
+        
+        System.out.println("=== End Session Debug ===");
         
         return response;
     }
@@ -214,5 +231,33 @@ public class AuthController {
             response.put("message", "Failed to change password. Please try again.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+
+    /**
+     * Debug endpoint to check session information
+     */
+    @GetMapping("/api/debug-session")
+    @ResponseBody
+    public Map<String, Object> debugSession(HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        response.put("sessionId", session.getId());
+        response.put("sessionCreationTime", new java.util.Date(session.getCreationTime()));
+        response.put("sessionLastAccessedTime", new java.util.Date(session.getLastAccessedTime()));
+        response.put("sessionMaxInactiveInterval", session.getMaxInactiveInterval());
+        
+        if (authentication != null) {
+            response.put("authenticationName", authentication.getName());
+            response.put("authenticationAuthenticated", authentication.isAuthenticated());
+            response.put("authenticationPrincipal", authentication.getPrincipal().toString());
+        } else {
+            response.put("authenticationName", "null");
+            response.put("authenticationAuthenticated", false);
+            response.put("authenticationPrincipal", "null");
+        }
+        
+        return response;
     }
 }

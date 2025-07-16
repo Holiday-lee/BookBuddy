@@ -10,10 +10,11 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Book entity for BookBuddy application
- * Represents books that users want to share (give away, lend, or trade)
+ * Represents books that users want to share (give away, lend, or swap)
  * @author holiday
  */
 @Entity
@@ -79,9 +80,7 @@ public class Book {
     @Column(name = "owner_id", nullable = false)
     private Long ownerId;
     
-    // Legacy field for database compatibility (deprecated)
-    @Column(name = "available")
-    private Boolean available;
+
     
     // Optional: Image URL for the book
     @Size(max = 500, message = "Image URL must be less than 500 characters")
@@ -100,7 +99,7 @@ public class Book {
     public enum SharingType {
         GIVE_AWAY("Give Away"),
         LEND("Lend for Specific Period"),
-        TRADE("Trade");
+        SWAP("Swap");
         
         private final String displayName;
         
@@ -119,7 +118,7 @@ public class Book {
         EXCHANGE_IN_PROGRESS("Exchange in Progress"),
         CURRENTLY_LENT_OUT("Currently Lent Out"),
         GIVEN_AWAY("Given Away"),
-        TRADED("Traded");
+        SWAPPED("Swapped");
         
         private final String displayName;
         
@@ -284,28 +283,42 @@ public class Book {
         this.updatedAt = updatedAt;
     }
     
-    // Legacy getter/setter for database compatibility
-    public Boolean getAvailable() {
-        return available;
-    }
-    
-    public void setAvailable(Boolean available) {
-        this.available = available;
-    }
+
     
     // Utility methods
     public boolean hasLocation() {
         return pickupLatitude != null && pickupLongitude != null;
     }
     
+    @JsonProperty("displayLocation")
     public String getDisplayLocation() {
         if (pickupLocation != null && !pickupLocation.trim().isEmpty()) {
             return pickupLocation;
         }
         if (hasLocation()) {
-            return String.format("Lat: %.4f, Lng: %.4f", pickupLatitude, pickupLongitude);
+            // Show coordinates in a more readable format
+            return String.format("📍 %.4f, %.4f", pickupLatitude, pickupLongitude);
         }
-        return "Location not specified";
+        return "📍 Location not specified";
+    }
+    
+    /**
+     * Get display location with optional distance information
+     */
+    public String getDisplayLocationWithDistance(Double userLat, Double userLng) {
+        String baseLocation = getDisplayLocation();
+        
+        if (userLat != null && userLng != null && hasLocation()) {
+            double distance = distanceTo(userLat, userLng);
+            if (distance < Double.MAX_VALUE) {
+                String distanceText = distance < 1 ? 
+                    String.format("%.0f m", distance * 1000) : 
+                    String.format("%.1f km", distance);
+                return baseLocation + " (" + distanceText + " away)";
+            }
+        }
+        
+        return baseLocation;
     }
     
     /**
@@ -355,10 +368,10 @@ public class Book {
     }
     
     /**
-     * Check if book can be traded
+     * Check if book can be swapped
      */
-    public boolean canBeTraded() {
-        return sharingType == SharingType.TRADE && status == BookStatus.AVAILABLE;
+    public boolean canBeSwapped() {
+        return sharingType == SharingType.SWAP && status == BookStatus.AVAILABLE;
     }
     
     @Override

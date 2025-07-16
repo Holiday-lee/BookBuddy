@@ -63,7 +63,7 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     List<Request> findByRequestTypeAndStatus(Request.RequestType requestType, Request.RequestStatus status);
     
     /**
-     * Find trade requests by offered book ID
+     * Find swap requests by offered book ID
      */
     List<Request> findByOfferedBookId(Long offeredBookId);
     
@@ -76,4 +76,14 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
      * Count pending requests for a book
      */
     long countByBookIdAndStatus(Long bookId, Request.RequestStatus status);
+    
+    /**
+     * Count requests by owner and status
+     */
+    long countByOwnerIdAndStatus(Long ownerId, Request.RequestStatus status);
+    
+    /**
+     * Count requests by requester and status in
+     */
+    long countByRequesterIdAndStatusIn(Long requesterId, List<Request.RequestStatus> statuses);
 } 

@@ -6,14 +6,17 @@ package com.bookbuddy.bookbuddy.service;
 
 import com.bookbuddy.bookbuddy.model.Book;
 import com.bookbuddy.bookbuddy.model.Request;
+import com.bookbuddy.bookbuddy.model.RequestWithBookInfo;
 import com.bookbuddy.bookbuddy.repository.BookRepository;
 import com.bookbuddy.bookbuddy.repository.RequestRepository;
+import com.bookbuddy.bookbuddy.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service for handling book requests
@@ -26,14 +29,20 @@ public class RequestService {
     private final RequestRepository requestRepository;
     private final BookRepository bookRepository;
     private final BookService bookService;
+    private final UserRepository userRepository;
+    private final ChatService chatService;
     
     @Autowired
     public RequestService(RequestRepository requestRepository, 
                         BookRepository bookRepository,
-                        BookService bookService) {
+                        BookService bookService,
+                        UserRepository userRepository,
+                        ChatService chatService) {
         this.requestRepository = requestRepository;
         this.bookRepository = bookRepository;
         this.bookService = bookService;
+        this.userRepository = userRepository;
+        this.chatService = chatService;
     }
     
     /**
@@ -104,21 +113,21 @@ public class RequestService {
     }
     
     /**
-     * Create a trade request
+     * Create a swap request
      */
-    public Request createTradeRequest(Long bookId, Long requesterId, Long offeredBookId, String message) {
+    public Request createSwapRequest(Long bookId, Long requesterId, Long offeredBookId, String message) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("Book not found"));
         
         Book offeredBook = bookRepository.findById(offeredBookId)
                 .orElseThrow(() -> new IllegalArgumentException("Offered book not found"));
         
-        if (!book.canBeTraded()) {
-            throw new IllegalArgumentException("Book is not available for trading");
+        if (!book.canBeSwapped()) {
+            throw new IllegalArgumentException("Book is not available for swapping");
         }
         
-        if (!offeredBook.canBeTraded()) {
-            throw new IllegalArgumentException("Offered book is not available for trading");
+        if (!offeredBook.canBeSwapped()) {
+            throw new IllegalArgumentException("Offered book is not available for swapping");
         }
         
         if (book.getOwnerId().equals(requesterId)) {
@@ -126,11 +135,11 @@ public class RequestService {
         }
         
         if (!offeredBook.getOwnerId().equals(requesterId)) {
-            throw new IllegalArgumentException("You can only offer your own books for trade");
+            throw new IllegalArgumentException("You can only offer your own books for swap");
         }
         
         if (bookId.equals(offeredBookId)) {
-            throw new IllegalArgumentException("Cannot trade a book for itself");
+            throw new IllegalArgumentException("Cannot swap a book for itself");
         }
         
         // Check if user already has a pending request for this book
@@ -138,7 +147,7 @@ public class RequestService {
             throw new IllegalArgumentException("You already have a pending request for this book");
         }
         
-        Request request = new Request(bookId, requesterId, book.getOwnerId(), Request.RequestType.TRADE);
+        Request request = new Request(bookId, requesterId, book.getOwnerId(), Request.RequestType.SWAP);
         request.setMessage(message);
         request.setOfferedBookId(offeredBookId);
         
@@ -171,11 +180,16 @@ public class RequestService {
             bookService.markAsExchangeInProgress(request.getBookId());
         } else if (request.isLendRequest()) {
             bookService.markAsCurrentlyLentOut(request.getBookId());
-        } else if (request.isTradeRequest()) {
+        } else if (request.isSwapRequest()) {
             bookService.markAsExchangeInProgress(request.getBookId());
             if (request.getOfferedBookId() != null) {
                 bookService.markAsExchangeInProgress(request.getOfferedBookId());
             }
+        }
+
+        // Automatically create a chat when a request is accepted
+        if (request.isGiveAwayRequest() || request.isLendRequest() || request.isSwapRequest()) {
+            chatService.createChatForRequest(requestId);
         }
         
         return requestRepository.save(request);
@@ -201,8 +215,8 @@ public class RequestService {
         // Mark book as available again
         bookService.markAsAvailable(request.getBookId());
         
-        // For trade requests, also mark offered book as available
-        if (request.isTradeRequest() && request.getOfferedBookId() != null) {
+        // For swap requests, also mark offered book as available
+        if (request.isSwapRequest() && request.getOfferedBookId() != null) {
             bookService.markAsAvailable(request.getOfferedBookId());
         }
         
@@ -210,7 +224,7 @@ public class RequestService {
     }
     
     /**
-     * Complete a request (for give away and trade)
+     * Complete a request (for give away and swap)
      */
     public Request completeRequest(Long requestId, Long userId) {
         Request request = requestRepository.findById(requestId)
@@ -230,10 +244,10 @@ public class RequestService {
         // Update book status based on request type
         if (request.isGiveAwayRequest()) {
             bookService.markAsGivenAway(request.getBookId());
-        } else if (request.isTradeRequest()) {
-            bookService.markAsTraded(request.getBookId());
+        } else if (request.isSwapRequest()) {
+            bookService.markAsSwapped(request.getBookId());
             if (request.getOfferedBookId() != null) {
-                bookService.markAsTraded(request.getOfferedBookId());
+                bookService.markAsSwapped(request.getOfferedBookId());
             }
         }
         
@@ -287,8 +301,8 @@ public class RequestService {
         // Mark book as available again
         bookService.markAsAvailable(request.getBookId());
         
-        // For trade requests, also mark offered book as available
-        if (request.isTradeRequest() && request.getOfferedBookId() != null) {
+        // For swap requests, also mark offered book as available
+        if (request.isSwapRequest() && request.getOfferedBookId() != null) {
             bookService.markAsAvailable(request.getOfferedBookId());
         }
         
@@ -349,5 +363,64 @@ public class RequestService {
     @Transactional(readOnly = true)
     public List<Request> findRequestsByBook(Long bookId) {
         return requestRepository.findByBookId(bookId);
+    }
+    
+    /**
+     * Find requests by requester with book information
+     */
+    @Transactional(readOnly = true)
+    public List<RequestWithBookInfo> findRequestsByRequesterWithBookInfo(Long requesterId) {
+        List<Request> requests = findRequestsByRequester(requesterId);
+        return requests.stream()
+                .map(this::enrichRequestWithBookInfo)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Find requests by owner with book information
+     */
+    @Transactional(readOnly = true)
+    public List<RequestWithBookInfo> findRequestsByOwnerWithBookInfo(Long ownerId) {
+        List<Request> requests = findRequestsByOwner(ownerId);
+        return requests.stream()
+                .map(this::enrichRequestWithBookInfo)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Enrich a request with book and user information
+     */
+    private RequestWithBookInfo enrichRequestWithBookInfo(Request request) {
+        Book book = bookRepository.findById(request.getBookId()).orElse(null);
+        
+        String ownerName = userRepository.findById(request.getOwnerId())
+                .map(user -> user.getFirstName() + " " + user.getLastName())
+                .orElse("Unknown Owner");
+        
+        String requesterName = userRepository.findById(request.getRequesterId())
+                .map(user -> user.getFirstName() + " " + user.getLastName())
+                .orElse("Unknown Requester");
+        
+        return new RequestWithBookInfo(request, book, ownerName, requesterName);
+    }
+    
+    /**
+     * Count pending requests by owner (for received requests notifications)
+     */
+    @Transactional(readOnly = true)
+    public long countPendingRequestsByOwner(Long ownerId) {
+        return requestRepository.countByOwnerIdAndStatus(ownerId, Request.RequestStatus.PENDING);
+    }
+    
+    /**
+     * Count updated sent requests (for sent requests notifications)
+     * This counts requests that have been updated (accepted, rejected, etc.)
+     */
+    @Transactional(readOnly = true)
+    public long countUpdatedSentRequests(Long requesterId) {
+        return requestRepository.countByRequesterIdAndStatusIn(
+            requesterId, 
+            List.of(Request.RequestStatus.ACCEPTED, Request.RequestStatus.REJECTED, Request.RequestStatus.COMPLETED)
+        );
     }
 } 

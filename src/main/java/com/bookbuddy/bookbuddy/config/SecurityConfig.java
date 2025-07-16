@@ -12,6 +12,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 /**
  * 
@@ -32,15 +37,15 @@ public class SecurityConfig {
                 
                 // Authentication endpoints - public access
                 .requestMatchers("/register", "/login", "/logout").permitAll()
-                .requestMatchers("/api/check-email", "/api/current-user").permitAll()
+                .requestMatchers("/api/check-email", "/api/current-user", "/api/debug-session").permitAll()
                 
                 // Static resources - allow all
                 .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**", "/fonts/**", "/favicon.ico").permitAll()
                 
                 // Public search functionality 
-                .requestMatchers("/pages/search-books.html").permitAll()
+                .requestMatchers("/pages/search-books.html", "/pages/user-profile.html").permitAll()
                 .requestMatchers("/search/**", "/api/books/search/**", "/api/books/nearby").permitAll()
-                .requestMatchers("/books/api/all", "/books/api/search", "/books/api/nearby", "/books/api/give-away", "/books/api/lend", "/books/api/trade", "/books/api/debug/all").permitAll()
+                .requestMatchers("/books/api/all", "/books/api/search", "/books/api/nearby", "/books/api/give-away", "/books/api/lend", "/books/api/swap", "/books/api/user/**").permitAll()
                 
                 // Protected pages - require authentication
                 .requestMatchers("/pages/dashboard.html", "/pages/list-book.html", 
@@ -50,9 +55,11 @@ public class SecurityConfig {
                                "/pages/settings.html").authenticated()
                 
                 // Protected API endpoints
-                .requestMatchers("/api/books/create", "/api/books/update/**", "/api/books/delete/**").authenticated()
-                .requestMatchers("/books/list", "/books/api/my-books", "/books/api/*/availability", "/books/api/*").authenticated()
+                .requestMatchers("/api/books/create", "/api/books/update/**", "/api/books/delete/**", "/books/api/*/delete").authenticated()
+                .requestMatchers("/books/list", "/books/api/my-books", "/books/api/*/availability", "/books/api/*", "/books/api/*/delete", "/books/api/swappable").authenticated()
                 .requestMatchers("/api/requests/**", "/api/chat/**", "/api/profile/**", "/api/user/**").authenticated()
+                .requestMatchers("/requests/api/**").authenticated()
+                .requestMatchers("/ws/**").authenticated()
                 
                 // All other requests require authentication
                 .anyRequest().authenticated()
@@ -78,14 +85,31 @@ public class SecurityConfig {
             
             // Session management
             .sessionManagement(session -> session
-                .maximumSessions(1)
+                .maximumSessions(5)  // Allow up to 5 sessions per user
                 .maxSessionsPreventsLogin(false)
             )
+            
+            // CORS configuration
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
             // Disable CSRF for easier testing (re-enable in production)
             .csrf(csrf -> csrf.disable());
             
         return http.build();
+    }
+    
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
     
     @Bean

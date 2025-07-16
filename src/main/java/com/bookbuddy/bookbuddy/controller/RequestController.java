@@ -5,16 +5,20 @@
 package com.bookbuddy.bookbuddy.controller;
 
 import com.bookbuddy.bookbuddy.model.Request;
+import com.bookbuddy.bookbuddy.model.RequestWithBookInfo;
+import com.bookbuddy.bookbuddy.model.User;
 import com.bookbuddy.bookbuddy.service.RequestService;
 import com.bookbuddy.bookbuddy.service.ChatService;
+import com.bookbuddy.bookbuddy.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,11 +33,32 @@ public class RequestController {
     
     private final RequestService requestService;
     private final ChatService chatService;
+    private final UserService userService;
     
     @Autowired
-    public RequestController(RequestService requestService, ChatService chatService) {
+    public RequestController(RequestService requestService, ChatService chatService, UserService userService) {
         this.requestService = requestService;
         this.chatService = chatService;
+        this.userService = userService;
+    }
+    
+    /**
+     * Get current user ID from Spring Security authentication
+     */
+    private Long getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || 
+            "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new IllegalArgumentException("Not authenticated");
+        }
+        
+        String email = authentication.getName();
+        Optional<User> userOpt = userService.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("User not found");
+        }
+        
+        return userOpt.get().getId();
     }
     
     /**
@@ -44,12 +69,8 @@ public class RequestController {
     public ResponseEntity<?> createGiveAwayRequest(@RequestParam("bookId") Long bookId,
                                                  @RequestParam(value = "message", required = false) String message,
                                                  HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
         try {
+            Long userId = getCurrentUserId();
             Request request = requestService.createGiveAwayRequest(bookId, userId, message);
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
@@ -66,12 +87,8 @@ public class RequestController {
                                              @RequestParam("requestedDurationDays") Integer requestedDurationDays,
                                              @RequestParam(value = "message", required = false) String message,
                                              HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
         try {
+            Long userId = getCurrentUserId();
             Request request = requestService.createLendRequest(bookId, userId, message, requestedDurationDays);
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
@@ -80,21 +97,17 @@ public class RequestController {
     }
     
     /**
-     * Create a trade request
+     * Create a swap request
      */
-    @PostMapping("/api/trade")
+    @PostMapping("/api/swap")
     @ResponseBody
-    public ResponseEntity<?> createTradeRequest(@RequestParam("bookId") Long bookId,
+    public ResponseEntity<?> createSwapRequest(@RequestParam("bookId") Long bookId,
                                               @RequestParam("offeredBookId") Long offeredBookId,
                                               @RequestParam(value = "message", required = false) String message,
                                               HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
         try {
-            Request request = requestService.createTradeRequest(bookId, userId, offeredBookId, message);
+            Long userId = getCurrentUserId();
+            Request request = requestService.createSwapRequest(bookId, userId, offeredBookId, message);
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -107,12 +120,8 @@ public class RequestController {
     @PostMapping("/api/{requestId}/accept")
     @ResponseBody
     public ResponseEntity<?> acceptRequest(@PathVariable Long requestId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
         try {
+            Long userId = getCurrentUserId();
             Request request = requestService.acceptRequest(requestId, userId);
             
             // Create chat for accepted request
@@ -130,12 +139,8 @@ public class RequestController {
     @PostMapping("/api/{requestId}/reject")
     @ResponseBody
     public ResponseEntity<?> rejectRequest(@PathVariable Long requestId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
         try {
+            Long userId = getCurrentUserId();
             Request request = requestService.rejectRequest(requestId, userId);
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
@@ -144,17 +149,13 @@ public class RequestController {
     }
     
     /**
-     * Complete a request (for give away and trade)
+     * Complete a request (for give away and swap)
      */
     @PostMapping("/api/{requestId}/complete")
     @ResponseBody
     public ResponseEntity<?> completeRequest(@PathVariable Long requestId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
         try {
+            Long userId = getCurrentUserId();
             Request request = requestService.completeRequest(requestId, userId);
             
             // Complete the associated chat
@@ -175,12 +176,8 @@ public class RequestController {
     @PostMapping("/api/{requestId}/return")
     @ResponseBody
     public ResponseEntity<?> returnLentBook(@PathVariable Long requestId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
         try {
+            Long userId = getCurrentUserId();
             Request request = requestService.returnLentBook(requestId, userId);
             
             // Complete the associated chat
@@ -201,12 +198,8 @@ public class RequestController {
     @PostMapping("/api/{requestId}/cancel")
     @ResponseBody
     public ResponseEntity<?> cancelRequest(@PathVariable Long requestId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
         try {
+            Long userId = getCurrentUserId();
             Request request = requestService.cancelRequest(requestId, userId);
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
@@ -234,13 +227,13 @@ public class RequestController {
     @GetMapping("/api/my-sent")
     @ResponseBody
     public ResponseEntity<?> getMySentRequests(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
+        try {
+            Long userId = getCurrentUserId();
+            List<RequestWithBookInfo> requests = requestService.findRequestsByRequesterWithBookInfo(userId);
+            return ResponseEntity.ok(requests);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
         }
-        
-        List<Request> requests = requestService.findRequestsByRequester(userId);
-        return ResponseEntity.ok(requests);
     }
     
     /**
@@ -249,43 +242,43 @@ public class RequestController {
     @GetMapping("/api/my-received")
     @ResponseBody
     public ResponseEntity<?> getMyReceivedRequests(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
+        try {
+            Long userId = getCurrentUserId();
+            List<RequestWithBookInfo> requests = requestService.findRequestsByOwnerWithBookInfo(userId);
+            return ResponseEntity.ok(requests);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
         }
-        
-        List<Request> requests = requestService.findRequestsByOwner(userId);
-        return ResponseEntity.ok(requests);
     }
     
     /**
-     * Get active requests by requester
+     * Get active sent requests
      */
     @GetMapping("/api/my-sent/active")
     @ResponseBody
     public ResponseEntity<?> getMyActiveSentRequests(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
+        try {
+            Long userId = getCurrentUserId();
+            List<Request> requests = requestService.findActiveRequestsByRequester(userId);
+            return ResponseEntity.ok(requests);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
         }
-        
-        List<Request> requests = requestService.findActiveRequestsByRequester(userId);
-        return ResponseEntity.ok(requests);
     }
     
     /**
-     * Get active requests by owner
+     * Get active received requests
      */
     @GetMapping("/api/my-received/active")
     @ResponseBody
     public ResponseEntity<?> getMyActiveReceivedRequests(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
+        try {
+            Long userId = getCurrentUserId();
+            List<Request> requests = requestService.findActiveRequestsByOwner(userId);
+            return ResponseEntity.ok(requests);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
         }
-        
-        List<Request> requests = requestService.findActiveRequestsByOwner(userId);
-        return ResponseEntity.ok(requests);
     }
     
     /**
@@ -306,5 +299,35 @@ public class RequestController {
     public ResponseEntity<?> getRequestsByBook(@PathVariable Long bookId) {
         List<Request> requests = requestService.findRequestsByBook(bookId);
         return ResponseEntity.ok(requests);
+    }
+    
+    /**
+     * Get notification count for received requests (pending requests)
+     */
+    @GetMapping("/api/notifications/received-count")
+    @ResponseBody
+    public ResponseEntity<?> getReceivedRequestsNotificationCount(HttpSession session) {
+        try {
+            Long userId = getCurrentUserId();
+            long count = requestService.countPendingRequestsByOwner(userId);
+            return ResponseEntity.ok(Map.of("count", count));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    /**
+     * Get notification count for sent requests (updates on sent requests)
+     */
+    @GetMapping("/api/notifications/sent-count")
+    @ResponseBody
+    public ResponseEntity<?> getSentRequestsNotificationCount(HttpSession session) {
+        try {
+            Long userId = getCurrentUserId();
+            long count = requestService.countUpdatedSentRequests(userId);
+            return ResponseEntity.ok(Map.of("count", count));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+        }
     }
 } 

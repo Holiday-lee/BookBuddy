@@ -6,258 +6,369 @@ package com.bookbuddy.bookbuddy.controller;
 
 import com.bookbuddy.bookbuddy.model.Chat;
 import com.bookbuddy.bookbuddy.model.Message;
+import com.bookbuddy.bookbuddy.model.User;
 import com.bookbuddy.bookbuddy.service.ChatService;
-import jakarta.servlet.http.HttpSession;
+import com.bookbuddy.bookbuddy.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.bookbuddy.bookbuddy.model.Book;
+import com.bookbuddy.bookbuddy.service.BookService;
 
 /**
- * Controller for handling chat operations
+ * Controller for handling chat functionality
  * @author holiday
  */
 @Controller
-@RequestMapping("/chats")
 public class ChatController {
     
     private final ChatService chatService;
+    private final UserService userService;
+    private final BookService bookService;
     
     @Autowired
-    public ChatController(ChatService chatService) {
+    public ChatController(ChatService chatService, UserService userService, BookService bookService) {
         this.chatService = chatService;
+        this.userService = userService;
+        this.bookService = bookService;
     }
     
     /**
-     * Send a message in a chat
+     * Get current user ID from Spring Security authentication
      */
-    @PostMapping("/api/{chatId}/send")
-    @ResponseBody
-    public ResponseEntity<?> sendMessage(@PathVariable Long chatId,
-                                       @RequestParam("content") String content,
-                                       HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
+    private Long getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || 
+            "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new IllegalArgumentException("Not authenticated");
         }
         
+        String email = authentication.getName();
+        Optional<User> userOpt = userService.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("User not found");
+        }
+        
+        return userOpt.get().getId();
+    }
+    
+    /**
+     * WebSocket endpoint for sending messages
+     */
+    @MessageMapping("/chat.sendMessage")
+    @SendTo("/topic/chat/{chatId}")
+    public Map<String, Object> sendMessage(@Payload Map<String, Object> messageData, 
+                                         SimpMessageHeaderAccessor headerAccessor) {
         try {
-            Message message = chatService.sendMessage(chatId, userId, content);
-            return ResponseEntity.ok(message);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            Long chatId = Long.parseLong(messageData.get("chatId").toString());
+            Long senderId = getCurrentUserId();
+            String content = messageData.get("content").toString();
+            
+            Message message = chatService.sendMessage(chatId, senderId, content);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("id", message.getId());
+            response.put("chatId", message.getChatId());
+            response.put("senderId", message.getSenderId());
+            response.put("content", message.getContent());
+            response.put("messageType", message.getMessageType());
+            response.put("createdAt", message.getCreatedAt());
+            
+            return response;
+            
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return error;
         }
     }
     
     /**
-     * Get messages for a chat
+     * WebSocket endpoint for joining chat
      */
-    @GetMapping("/api/{chatId}/messages")
-    @ResponseBody
-    public ResponseEntity<?> getChatMessages(@PathVariable Long chatId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
+    @MessageMapping("/chat.addUser")
+    @SendTo("/topic/chat/{chatId}")
+    public Map<String, Object> addUser(@Payload Map<String, Object> joinData, 
+                                     SimpMessageHeaderAccessor headerAccessor) {
         try {
+            Long chatId = Long.parseLong(joinData.get("chatId").toString());
+            Long userId = getCurrentUserId();
+            
+            // Verify user is part of the chat
+            Optional<Chat> chatOpt = chatService.findById(chatId);
+            if (chatOpt.isEmpty() || !chatOpt.get().involvesUser(userId)) {
+                throw new IllegalArgumentException("You are not part of this chat");
+            }
+            
+            // Add username to web socket session
+            headerAccessor.getSessionAttributes().put("chatId", chatId);
+            headerAccessor.getSessionAttributes().put("userId", userId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("type", "JOIN");
+            response.put("userId", userId);
+            response.put("message", "User joined the chat");
+            
+            return response;
+            
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return error;
+        }
+    }
+    
+    /**
+     * WebSocket endpoint for typing indicator
+     */
+    @MessageMapping("/chat.typing")
+    @SendTo("/topic/chat/{chatId}/typing")
+    public Map<String, Object> typing(@Payload Map<String, Object> typingData, 
+                                     SimpMessageHeaderAccessor headerAccessor) {
+        try {
+            Long chatId = Long.parseLong(typingData.get("chatId").toString());
+            Long userId = getCurrentUserId();
+            
+            // Verify user is part of the chat
+            Optional<Chat> chatOpt = chatService.findById(chatId);
+            if (chatOpt.isEmpty() || !chatOpt.get().involvesUser(userId)) {
+                throw new IllegalArgumentException("You are not part of this chat");
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("chatId", chatId);
+            response.put("userId", userId);
+            response.put("type", "TYPING");
+            
+            return response;
+            
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return error;
+        }
+    }
+    
+    /**
+     * WebSocket endpoint for stop typing indicator
+     */
+    @MessageMapping("/chat.stopTyping")
+    @SendTo("/topic/chat/{chatId}/stopTyping")
+    public Map<String, Object> stopTyping(@Payload Map<String, Object> typingData, 
+                                         SimpMessageHeaderAccessor headerAccessor) {
+        try {
+            Long chatId = Long.parseLong(typingData.get("chatId").toString());
+            Long userId = getCurrentUserId();
+            
+            // Verify user is part of the chat
+            Optional<Chat> chatOpt = chatService.findById(chatId);
+            if (chatOpt.isEmpty() || !chatOpt.get().involvesUser(userId)) {
+                throw new IllegalArgumentException("You are not part of this chat");
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("chatId", chatId);
+            response.put("userId", userId);
+            response.put("type", "STOP_TYPING");
+            
+            return response;
+            
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return error;
+        }
+    }
+    
+    /**
+     * REST API: Get chat messages
+     */
+    @GetMapping("/api/chat/{chatId}/messages")
+    @ResponseBody
+    public ResponseEntity<?> getChatMessages(@PathVariable Long chatId) {
+        try {
+            Long userId = getCurrentUserId();
+            
+            // Verify user is part of the chat
+            Optional<Chat> chatOpt = chatService.findById(chatId);
+            if (chatOpt.isEmpty() || !chatOpt.get().involvesUser(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "You are not part of this chat"));
+            }
+            
             List<Message> messages = chatService.getChatMessages(chatId);
             return ResponseEntity.ok(messages);
+            
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to load messages"));
         }
     }
     
     /**
-     * Get recent messages for a chat
+     * REST API: Get user's active chats
      */
-    @GetMapping("/api/{chatId}/messages/recent")
+    @GetMapping("/api/chat/active")
     @ResponseBody
-    public ResponseEntity<?> getRecentChatMessages(@PathVariable Long chatId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
+    public ResponseEntity<?> getActiveChats() {
         try {
-            List<Message> messages = chatService.getRecentChatMessages(chatId);
-            return ResponseEntity.ok(messages);
+            Long userId = getCurrentUserId();
+            List<Chat> chats = chatService.findActiveChatsByUser(userId);
+            return ResponseEntity.ok(chats);
+            
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to load chats"));
         }
     }
     
     /**
-     * Complete a chat
+     * REST API: Get chat by request ID
      */
-    @PostMapping("/api/{chatId}/complete")
+    @GetMapping("/api/chat/request/{requestId}")
     @ResponseBody
-    public ResponseEntity<?> completeChat(@PathVariable Long chatId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
+    public ResponseEntity<?> getChatByRequest(@PathVariable Long requestId) {
         try {
+            Long userId = getCurrentUserId();
+            
+            Optional<Chat> chatOpt = chatService.findByRequestId(requestId);
+            if (chatOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            Chat chat = chatOpt.get();
+            if (!chat.involvesUser(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "You are not part of this chat"));
+            }
+            
+            return ResponseEntity.ok(chat);
+            
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to load chat"));
+        }
+    }
+    
+    /**
+     * REST API: Complete chat
+     */
+    @PostMapping("/api/chat/{chatId}/complete")
+    @ResponseBody
+    public ResponseEntity<?> completeChat(@PathVariable Long chatId) {
+        try {
+            Long userId = getCurrentUserId();
             Chat chat = chatService.completeChat(chatId, userId);
             return ResponseEntity.ok(chat);
+            
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to complete chat"));
         }
     }
     
     /**
-     * Cancel a chat
+     * REST API: Cancel chat
      */
-    @PostMapping("/api/{chatId}/cancel")
+    @PostMapping("/api/chat/{chatId}/cancel")
     @ResponseBody
-    public ResponseEntity<?> cancelChat(@PathVariable Long chatId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
+    public ResponseEntity<?> cancelChat(@PathVariable Long chatId) {
         try {
+            Long userId = getCurrentUserId();
             Chat chat = chatService.cancelChat(chatId, userId);
             return ResponseEntity.ok(chat);
+            
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to cancel chat"));
         }
     }
-    
+
     /**
-     * Get chat by ID
+     * REST API: Get chat by request ID with enhanced information
      */
-    @GetMapping("/api/{chatId}")
+    @GetMapping("/api/chat/request/{requestId}/details")
     @ResponseBody
-    public ResponseEntity<?> getChat(@PathVariable Long chatId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
-        Optional<Chat> chatOpt = chatService.findById(chatId);
-        if (chatOpt.isPresent()) {
-            Chat chat = chatOpt.get();
-            if (chat.involvesUser(userId)) {
-                return ResponseEntity.ok(chat);
-            } else {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Not authorized"));
-            }
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-    
-    /**
-     * Get chat by request ID
-     */
-    @GetMapping("/api/request/{requestId}")
-    @ResponseBody
-    public ResponseEntity<?> getChatByRequest(@PathVariable Long requestId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
-        Optional<Chat> chatOpt = chatService.findByRequestId(requestId);
-        if (chatOpt.isPresent()) {
-            Chat chat = chatOpt.get();
-            if (chat.involvesUser(userId)) {
-                return ResponseEntity.ok(chat);
-            } else {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Not authorized"));
-            }
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-    
-    /**
-     * Get active chats for current user
-     */
-    @GetMapping("/api/active")
-    @ResponseBody
-    public ResponseEntity<?> getActiveChats(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
-        List<Chat> chats = chatService.findActiveChatsByUser(userId);
-        return ResponseEntity.ok(chats);
-    }
-    
-    /**
-     * Get all chats for current user
-     */
-    @GetMapping("/api/all")
-    @ResponseBody
-    public ResponseEntity<?> getAllChats(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
-        List<Chat> chats = chatService.findAllChatsByUser(userId);
-        return ResponseEntity.ok(chats);
-    }
-    
-    /**
-     * Get completed chats for current user
-     */
-    @GetMapping("/api/completed")
-    @ResponseBody
-    public ResponseEntity<?> getCompletedChats(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
-        List<Chat> chats = chatService.findCompletedChatsByUser(userId);
-        return ResponseEntity.ok(chats);
-    }
-    
-    /**
-     * Get unread message count for a chat
-     */
-    @GetMapping("/api/{chatId}/unread-count")
-    @ResponseBody
-    public ResponseEntity<?> getUnreadMessageCount(@PathVariable Long chatId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
+    public ResponseEntity<?> getChatDetailsByRequest(@PathVariable Long requestId) {
         try {
-            long count = chatService.getUnreadMessageCount(chatId, userId);
-            return ResponseEntity.ok(Map.of("unreadCount", count));
+            Long userId = getCurrentUserId();
+            
+            Optional<Chat> chatOpt = chatService.findByRequestId(requestId);
+            if (chatOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            Chat chat = chatOpt.get();
+            if (!chat.involvesUser(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "You are not part of this chat"));
+            }
+            
+            // Get book information
+            Optional<Book> bookOpt = bookService.findById(chat.getBookId());
+            if (bookOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Book not found"));
+            }
+            
+            Book book = bookOpt.get();
+            
+            // Get user information
+            Optional<User> user1Opt = userService.findById(chat.getUser1Id());
+            Optional<User> user2Opt = userService.findById(chat.getUser2Id());
+            
+            if (user1Opt.isEmpty() || user2Opt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "User information not found"));
+            }
+            
+            User user1 = user1Opt.get();
+            User user2 = user2Opt.get();
+            
+            // Create enhanced response
+            Map<String, Object> response = new HashMap<>();
+            response.put("chat", chat);
+            response.put("book", Map.of(
+                "id", book.getId(),
+                "title", book.getTitle(),
+                "author", book.getAuthor(),
+                "genre", book.getGenre(),
+                "condition", book.getCondition(),
+                "sharingType", book.getSharingType().getDisplayName()
+            ));
+            response.put("user1", Map.of(
+                "id", user1.getId(),
+                "firstName", user1.getFirstName(),
+                "lastName", user1.getLastName(),
+                "email", user1.getEmail()
+            ));
+            response.put("user2", Map.of(
+                "id", user2.getId(),
+                "firstName", user2.getFirstName(),
+                "lastName", user2.getLastName(),
+                "email", user2.getEmail()
+            ));
+            response.put("currentUserId", userId);
+            
+            return ResponseEntity.ok(response);
+            
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-    
-    /**
-     * Get latest message for a chat
-     */
-    @GetMapping("/api/{chatId}/latest-message")
-    @ResponseBody
-    public ResponseEntity<?> getLatestMessage(@PathVariable Long chatId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-        }
-        
-        try {
-            Message message = chatService.getLatestMessage(chatId);
-            return ResponseEntity.ok(message);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to load chat details"));
         }
     }
 } 

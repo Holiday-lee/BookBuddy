@@ -55,7 +55,6 @@ public class BookService {
         book.setOwnerId(ownerId);
         book.setSharingType(sharingType);
         book.setStatus(Book.BookStatus.AVAILABLE);
-        book.setAvailable(true); // Set legacy field for database compatibility
         
         // Set lending duration for lend books
         if (sharingType == Book.SharingType.LEND) {
@@ -252,13 +251,13 @@ public class BookService {
     }
     
     /**
-     * Mark book as traded
+     * Mark book as swapped
      */
-    public Book markAsTraded(Long bookId) {
+    public Book markAsSwapped(Long bookId) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + bookId));
         
-        book.setStatus(Book.BookStatus.TRADED);
+        book.setStatus(Book.BookStatus.SWAPPED);
         return bookRepository.save(book);
     }
     
@@ -312,19 +311,19 @@ public class BookService {
     }
     
     /**
-     * Find books available for trading
+     * Find books available for swapping
      */
     @Transactional(readOnly = true)
-    public List<Book> findAvailableTradeBooks() {
-        return bookRepository.findAvailableTradeBooks();
+    public List<Book> findAvailableSwapBooks() {
+        return bookRepository.findAvailableSwapBooks();
     }
     
     /**
-     * Find tradeable books by owner (for trade requests)
+     * Find swappable books by owner (for swap requests)
      */
     @Transactional(readOnly = true)
-    public List<Book> findTradeableBooksByOwner(Long ownerId) {
-        return bookRepository.findTradeableBooksByOwner(ownerId);
+    public List<Book> findSwappableBooksByOwner(Long ownerId) {
+        return bookRepository.findSwappableBooksByOwner(ownerId);
     }
     
     /**

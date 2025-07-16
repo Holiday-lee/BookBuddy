@@ -58,12 +58,18 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                     
                     <!-- My Received Requests -->
                     <li class="nav-item auth-required" style="display: none;">
-                        <a class="nav-link" href="/pages/my-received-requests.html">My Received Requests</a>
+                        <a class="nav-link position-relative" href="/pages/my-received-requests.html">
+                            My Received Requests
+                            <span id="received-requests-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none; font-size: 0.6em;">0</span>
+                        </a>
                     </li>
                     
                     <!-- My Sent Requests -->
                     <li class="nav-item auth-required" style="display: none;">
-                        <a class="nav-link" href="/pages/my-sent-requests.html">My Sent Requests</a>
+                        <a class="nav-link position-relative" href="/pages/my-sent-requests.html">
+                            My Sent Requests
+                            <span id="sent-requests-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none; font-size: 0.6em;">0</span>
+                        </a>
                     </li>
                     
                     <!-- Chat -->
@@ -219,6 +225,9 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
     <!-- Bootstrap Script -->	
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     
+    <!-- Notifications Script -->
+    <script src="/js/notifications.js"></script>
+    
     <!-- Authentication and Navigation Script -->
     <script>
         // Check authentication status and update navbar
@@ -230,7 +239,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
         //  Checks if user is log in using an API end point
         async function checkAuthenticationStatus() {
             try {
-                const response = await fetch('/api/current-user'); // call API endpoint on the server
+                const response = await fetch('/api/current-user', { credentials: 'include' }); // call API endpoint on the server
                 if (response.ok) {
                     const user = await response.json(); // the endpoint return in json
                     if (user && user.authenticated) { // if user is logged in 
@@ -252,14 +261,21 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             // Hide login/signup buttons
             document.getElementById('auth-buttons').style.display = 'none';
             
-            // Show authenticated features
-            const authRequired = document.querySelectorAll('.auth-required');
-            authRequired.forEach(element => {
-                element.style.display = 'block';
+            // Show authenticated navbar items
+            document.querySelectorAll('.auth-required').forEach(item => {
+                item.style.display = 'block';
             });
             
-            // Update user name in dropdown
+            // Show user menu
+            document.getElementById('user-menu').style.display = 'block';
+            
+            // Update user name
             document.getElementById('user-name').textContent = user.firstName || 'User';
+            
+            // Initialize notifications
+            if (window.notifications) {
+                window.notifications.initNotifications();
+            }
         }
 
         // Shows login/sign up buttons if not log in.

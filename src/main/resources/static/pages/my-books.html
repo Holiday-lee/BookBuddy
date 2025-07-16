@@ -31,8 +31,8 @@
                         
                         <!-- Auth required links -->
                         <li class="nav-item auth-required" style="display:none;"><a class="nav-link" href="/pages/list-book.html">List a Book</a></li>
-                        <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/my-received-requests.html">My Received Requests</a></li>
-                        <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/my-sent-requests.html">My Sent Requests</a></li>
+                        <li class="nav-item auth-required" style="display:none;" ><a class="nav-link position-relative" href="/pages/my-received-requests.html">My Received Requests<span id="received-requests-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none; font-size: 0.6em;">0</span></a></li>
+                        <li class="nav-item auth-required" style="display:none;" ><a class="nav-link position-relative" href="/pages/my-sent-requests.html">My Sent Requests<span id="sent-requests-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none; font-size: 0.6em;">0</span></a></li>
                         <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/chat.html">Chat</a></li>
                         <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/swap-history.html">Swap History</a></li>
                     </ul>
@@ -111,27 +111,32 @@
         <!-- Bootstrap -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
         
+        <!-- Notifications Script -->
+        <script src="/js/notifications.js"></script>
+        
         <script>
-        // Global variables
         let userBooks = [];
         
-        // Check authentication and setup page
         document.addEventListener('DOMContentLoaded', function(){
             checkAuthentication();
-            loadUserBooks();
         });
         
-        // Authentication check
         function checkAuthentication(){
-            fetch('/api/current-user')
+            fetch('/api/current-user', { credentials: 'include' })
                     .then(response => response.json())
                     .then(data => {
                         if (data.authenticated){
-                            // finds ALL elements on the page that match a CSS selector: auth-required
-                            document.querySelectorAll('.auth-required').forEach(el => el.style.display = 'block'); //elements with class auth-required become visible
+                            document.querySelectorAll('.auth-required').forEach(el => el.style.display = 'block');
                             document.getElementById('auth-buttons').style.display = 'none'; // hide auth-buttons("Login", "Sign Up") 
                             document.getElementById('user-menu').style.display = 'block'; //show user menu
                             document.getElementById('user-name').innerText = data.firstName || "User"; //show user first name or "User" as fallback
+                            
+                            // Initialize notifications
+                            if (window.notifications) {
+                                window.notifications.initNotifications();
+                            }
+                            
+                            loadUserBooks();
                         } else {
                             //redirect to login if not authenticated
                             window.location.href = '/pages/login.html';
@@ -148,7 +153,7 @@
             const loadingSpinner = document.getElementById('loadingSpinner');
             const booksContainer = document.getElementById('booksContainer');
             
-            fetch('/books/api/my-books')
+            fetch('/books/api/my-books', { credentials: 'include' })
                 .then(response => response.json())
                 .then(data => {
                     loadingSpinner.style.display = 'none';

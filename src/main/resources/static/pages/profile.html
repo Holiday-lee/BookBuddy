@@ -177,7 +177,7 @@
         
         // Authentication check
         function checkAuthentication(){
-            fetch('/api/current-user')
+            fetch('/api/current-user', { credentials: 'include' })
                     .then(response => response.json())
                     .then(data => {
                         if (data.authenticated){
@@ -202,7 +202,7 @@
             const loadingSpinner = document.getElementById('loadingSpinner');
             const profileForm = document.getElementById('profileForm');
             
-            fetch('/api/current-user')
+            fetch('/api/current-user', { credentials: 'include' })
                 .then(response => response.json())
                 .then(data => {
                     loadingSpinner.style.display = 'none';

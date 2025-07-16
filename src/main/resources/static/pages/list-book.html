@@ -145,7 +145,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                                             <option value="">Select sharing type</option>
                                             <option value="GIVE_AWAY">Give Away</option>
                                             <option value="LEND">Lend for Specific Period</option>
-                                            <option value="TRADE">Trade</option>
+                                            <option value="SWAP">Swap</option>
                                         </select>
                                         <div class="invalid-feedback"></div>
                                     </div>
@@ -249,7 +249,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
         
         // Authentication check
         function checkAuthentication(){
-            fetch('/api/current-user')
+            fetch('/api/current-user', { credentials: 'include' })
                     .then(response => response.json()) // convert server response to JSON 
                     .then(data => {  // then(parameter=data) data contains the user info
                         if (data.authenticated){

@@ -138,10 +138,10 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     List<Book> findAvailableLendBooks();
     
     /**
-     * Find books available for trading
+     * Find books available for swapping
      */
-    @Query("SELECT b FROM Book b WHERE b.status = 'AVAILABLE' AND b.sharingType = 'TRADE'")
-    List<Book> findAvailableTradeBooks();
+    @Query("SELECT b FROM Book b WHERE b.status = 'AVAILABLE' AND b.sharingType = 'SWAP'")
+    List<Book> findAvailableSwapBooks();
     
     /**
      * Find books by owner and sharing type
@@ -149,8 +149,8 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     List<Book> findByOwnerIdAndSharingType(Long ownerId, Book.SharingType sharingType);
     
     /**
-     * Find books that can be traded (for trade requests)
+     * Find books that can be swapped (for swap requests)
      */
-    @Query("SELECT b FROM Book b WHERE b.ownerId = :ownerId AND b.status = 'AVAILABLE' AND b.sharingType = 'TRADE'")
-    List<Book> findTradeableBooksByOwner(@Param("ownerId") Long ownerId);
+    @Query("SELECT b FROM Book b WHERE b.ownerId = :ownerId AND b.status = 'AVAILABLE' AND b.sharingType = 'SWAP'")
+    List<Book> findSwappableBooksByOwner(@Param("ownerId") Long ownerId);
 }

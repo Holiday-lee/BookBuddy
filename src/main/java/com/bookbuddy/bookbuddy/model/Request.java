@@ -11,7 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 /**
  * Request entity for BookBuddy application
- * Represents requests for books (give away, lend, trade)
+ * Represents requests for books (give away, lend, swap)
  * @author holiday
  */
 @Entity
@@ -48,7 +48,7 @@ public class Request {
     @Column(name = "message", length = 1000)
     private String message;
     
-    // For trade requests: the book being offered in exchange
+    // For swap requests: the book being offered in exchange
     @Column(name = "offered_book_id")
     private Long offeredBookId;
     
@@ -68,7 +68,7 @@ public class Request {
     public enum RequestType {
         GIVE_AWAY("Give Away Request"),
         LEND("Lending Request"),
-        TRADE("Trade Request");
+        SWAP("Swap Request");
         
         private final String displayName;
         
@@ -202,6 +202,14 @@ public class Request {
         this.updatedAt = updatedAt;
     }
     
+    /**
+     * Get book information for display purposes
+     * This method should be used with a BookService to fetch the actual book details
+     */
+    public String getBookDisplayInfo() {
+        return "Book ID: " + bookId;
+    }
+    
     // Utility methods
     public boolean isPending() {
         return status == RequestStatus.PENDING;
@@ -231,8 +239,8 @@ public class Request {
         return requestType == RequestType.LEND;
     }
     
-    public boolean isTradeRequest() {
-        return requestType == RequestType.TRADE;
+    public boolean isSwapRequest() {
+        return requestType == RequestType.SWAP;
     }
     
     @Override

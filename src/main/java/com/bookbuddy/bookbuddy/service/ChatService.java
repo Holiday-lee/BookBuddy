@@ -223,8 +223,8 @@ public class ChatService {
                 return "Give away request accepted! You can now arrange the pickup details.";
             case LEND:
                 return "Lending request accepted! You can now arrange the pickup and return details.";
-            case TRADE:
-                return "Trade request accepted! You can now arrange the book exchange details.";
+            case SWAP:
+                return "Swap request accepted! You can now arrange the book exchange details.";
             default:
                 return "Request accepted! You can now arrange the details.";
         }
