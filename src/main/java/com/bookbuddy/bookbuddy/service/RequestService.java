@@ -52,12 +52,12 @@ public class RequestService {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("Book not found"));
         
-        if (!book.canBeGivenAway()) {
-            throw new IllegalArgumentException("Book is not available for give away");
-        }
-        
         if (book.getOwnerId().equals(requesterId)) {
             throw new IllegalArgumentException("You cannot request your own book");
+        }
+        
+        if (!book.canBeGivenAway()) {
+            throw new IllegalArgumentException("Book is not available for give away");
         }
         
         // Check if user already has a pending request for this book
@@ -81,12 +81,12 @@ public class RequestService {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("Book not found"));
         
-        if (!book.canBeLent()) {
-            throw new IllegalArgumentException("Book is not available for lending");
-        }
-        
         if (book.getOwnerId().equals(requesterId)) {
             throw new IllegalArgumentException("You cannot request your own book");
+        }
+        
+        if (!book.canBeLent()) {
+            throw new IllegalArgumentException("Book is not available for lending");
         }
         
         if (requestedDurationDays == null || requestedDurationDays <= 0) {
@@ -122,20 +122,20 @@ public class RequestService {
         Book offeredBook = bookRepository.findById(offeredBookId)
                 .orElseThrow(() -> new IllegalArgumentException("Offered book not found"));
         
-        if (!book.canBeSwapped()) {
-            throw new IllegalArgumentException("Book is not available for swapping");
-        }
-        
-        if (!offeredBook.canBeSwapped()) {
-            throw new IllegalArgumentException("Offered book is not available for swapping");
-        }
-        
         if (book.getOwnerId().equals(requesterId)) {
             throw new IllegalArgumentException("You cannot request your own book");
         }
         
         if (!offeredBook.getOwnerId().equals(requesterId)) {
             throw new IllegalArgumentException("You can only offer your own books for swap");
+        }
+        
+        if (!book.canBeSwapped()) {
+            throw new IllegalArgumentException("Book is not available for swapping");
+        }
+        
+        if (!offeredBook.canBeSwapped()) {
+            throw new IllegalArgumentException("Offered book is not available for swapping");
         }
         
         if (bookId.equals(offeredBookId)) {
@@ -187,9 +187,19 @@ public class RequestService {
             }
         }
 
-        // Automatically create a chat when a request is accepted
+        // Automatically create a chat when a request is accepted (if one doesn't already exist)
         if (request.isGiveAwayRequest() || request.isLendRequest() || request.isSwapRequest()) {
-            chatService.createChatForRequest(requestId);
+            try {
+                chatService.createChatForRequest(requestId);
+            } catch (IllegalArgumentException e) {
+                if (e.getMessage().contains("Chat already exists")) {
+                    // Chat already exists, which is fine - just continue
+                    System.out.println("Chat already exists for request " + requestId + ", continuing...");
+                } else {
+                    // Re-throw other IllegalArgumentException
+                    throw e;
+                }
+            }
         }
         
         return requestRepository.save(request);
@@ -322,7 +332,7 @@ public class RequestService {
      */
     @Transactional(readOnly = true)
     public List<Request> findRequestsByRequester(Long requesterId) {
-        return requestRepository.findByRequesterId(requesterId);
+        return requestRepository.findByRequesterIdOrderByCreatedAtDesc(requesterId);
     }
     
     /**
@@ -330,7 +340,7 @@ public class RequestService {
      */
     @Transactional(readOnly = true)
     public List<Request> findRequestsByOwner(Long ownerId) {
-        return requestRepository.findByOwnerId(ownerId);
+        return requestRepository.findByOwnerIdOrderByCreatedAtDesc(ownerId);
     }
     
     /**
@@ -354,7 +364,7 @@ public class RequestService {
      */
     @Transactional(readOnly = true)
     public List<Request> findPendingRequestsByBook(Long bookId) {
-        return requestRepository.findByBookIdAndStatus(bookId, Request.RequestStatus.PENDING);
+        return requestRepository.findByBookIdAndStatusOrderByCreatedAtDesc(bookId, Request.RequestStatus.PENDING);
     }
     
     /**
@@ -362,7 +372,7 @@ public class RequestService {
      */
     @Transactional(readOnly = true)
     public List<Request> findRequestsByBook(Long bookId) {
-        return requestRepository.findByBookId(bookId);
+        return requestRepository.findByBookIdOrderByCreatedAtDesc(bookId);
     }
     
     /**

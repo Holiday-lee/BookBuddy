@@ -42,7 +42,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                         <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/my-received-requests.html">My Received Requests</a></li>
                         <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/my-sent-requests.html">My Sent Requests</a></li>
                         <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/chat.html">Chat</a></li>
-                        <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/swap-history.html">Swap History</a></li>
+        
                     </ul>
                     
                     <!-- Auth button-->
@@ -82,7 +82,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                             <!-- Alert Messages -->
                             <div id="alertContainer"></div>
                             
-                            <form id="listBookForm" action="/books/list" method="post">
+                            <form id="listBookForm" action="/books/api/list" method="post">
                                 <!-- Title -->
                                 <div class="mb-3">
                                     <label for="title" class="form-label">Book Title *</label>
@@ -301,7 +301,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                 }
                 
                 // submit form
-                fetch('/books/list', {
+                fetch('/books/api/list', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',

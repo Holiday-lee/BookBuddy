@@ -34,7 +34,7 @@
                         <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/my-received-requests.html">My Received Requests</a></li>
                         <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/my-sent-requests.html">My Sent Requests</a></li>
                         <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/chat.html">Chat</a></li>
-                        <li class="nav-item auth-required" style="display:none;" ><a class="nav-link" href="/pages/swap-history.html">Swap History</a></li>
+        
                     </ul>
                     
                     <!-- Auth button-->
@@ -106,6 +106,8 @@
         
         <script>
         let currentUserId = null;
+        let currentBookSharingType = null;
+        let currentBookData = null;
         
         document.addEventListener('DOMContentLoaded', function(){
             checkAuthentication();
@@ -218,7 +220,7 @@
                 
                 html += `
                     <div class="col-md-6 col-lg-4">
-                        <div class="card h-100">
+                        <div class="card h-100" data-book='${JSON.stringify(book)}'>
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h5 class="card-title mb-0">${book.title}</h5>
@@ -269,6 +271,7 @@
                     
                     // Find the book data from the current search results
                     const bookCard = event ? event.target.closest('.card') : document.querySelector(`[onclick*="requestBook(${bookId})"]`).closest('.card');
+                    const bookData = JSON.parse(bookCard.dataset.book);
                     const bookTitle = bookCard.querySelector('.card-title').textContent;
                     const bookAuthor = bookCard.querySelector('.card-subtitle').textContent;
                     
@@ -280,9 +283,12 @@
                     const genreElement = Array.from(bookCard.querySelectorAll('small')).find(el => el.textContent.includes('Genre:'));
                     const bookGenre = genreElement ? genreElement.textContent.replace('Genre: ', '') : '';
                     
-                    // Get sharing type - look for the small element that contains "📚"
-                    const sharingTypeElement = Array.from(bookCard.querySelectorAll('small')).find(el => el.textContent.includes('📚'));
-                    const bookSharingType = sharingTypeElement ? sharingTypeElement.textContent.replace('📚 ', '') : 'Unknown';
+                    // Get sharing type from the stored book data
+                    const bookSharingType = bookData.sharingType || 'Unknown';
+                    
+                    // Store the sharing type for later use
+                    currentBookSharingType = bookSharingType;
+                    currentBookData = bookData;
                     
                     // Show a simple confirmation dialog
                     const message = prompt(`Request "${bookTitle}" by ${bookAuthor}?\n\nPlease enter a message for the book owner (optional):`);
@@ -305,13 +311,40 @@
             sendBtn.disabled = true;
             sendBtn.innerHTML = 'Sending...';
             
-            fetch('/requests/api/give-away', {
+            // Determine the appropriate endpoint based on sharing type
+            let endpoint = '/requests/api/give-away';
+            let requestBody = `bookId=${bookId}&message=${encodeURIComponent(message)}`;
+            
+            if (currentBookSharingType === 'LEND') {
+                // For lending, use the book's maximum lending duration or a default
+                const maxDuration = currentBookData.lendingDurationDays || 30; // Default to 30 days if not specified
+                endpoint = '/requests/api/lend';
+                requestBody = `bookId=${bookId}&message=${encodeURIComponent(message)}&requestedDurationDays=${maxDuration}`;
+            } else if (currentBookSharingType === 'SWAP') {
+                // For swap, we need to prompt for offered book ID
+                const offeredBookId = prompt('Enter the ID of the book you want to offer in exchange:');
+                if (offeredBookId === null) {
+                    sendBtn.disabled = false;
+                    sendBtn.innerHTML = originalText;
+                    return;
+                }
+                if (!offeredBookId || isNaN(parseInt(offeredBookId))) {
+                    alert('Please enter a valid book ID');
+                    sendBtn.disabled = false;
+                    sendBtn.innerHTML = originalText;
+                    return;
+                }
+                endpoint = '/requests/api/swap';
+                requestBody = `bookId=${bookId}&message=${encodeURIComponent(message)}&offeredBookId=${offeredBookId}`;
+            }
+            
+            fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 credentials: 'include',
-                body: `bookId=${bookId}&message=${encodeURIComponent(message)}`
+                body: requestBody
             })
             .then(response => response.json())
             .then(data => {

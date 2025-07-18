@@ -42,6 +42,10 @@ public class Message {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     
+    // Track if the message has been read by the recipient
+    @Column(name = "is_read", nullable = false)
+    private Boolean isRead = false;
+    
     // Enum for message types
     public enum MessageType {
         TEXT("Text"),
@@ -71,15 +75,17 @@ public class Message {
         this.chatId = chatId;
         this.senderId = senderId;
         this.content = content;
+        this.isRead = false;
     }
     
     // Constructor for system messages
     public Message(Long chatId, String content, MessageType messageType) {
         this();
         this.chatId = chatId;
-        this.senderId = null; // System messages don't have a sender
+        this.senderId = 0L; // Use 0 for system messages (special system user ID)
         this.content = content;
         this.messageType = messageType;
+        this.isRead = true; // System messages are considered read by default
     }
     
     // Getters and Setters
@@ -131,11 +137,23 @@ public class Message {
         this.createdAt = createdAt;
     }
     
+    public Boolean getIsRead() {
+        return isRead;
+    }
+    
+    public void setIsRead(Boolean isRead) {
+        this.isRead = isRead;
+    }
+    
     // Utility methods
     public boolean isSystemMessage() {
         return messageType == MessageType.SYSTEM || 
                messageType == MessageType.EXCHANGE_COMPLETED || 
                messageType == MessageType.EXCHANGE_CANCELLED;
+    }
+    
+    public boolean isFromSystem() {
+        return senderId != null && senderId == 0L;
     }
     
     public boolean isTextMessage() {

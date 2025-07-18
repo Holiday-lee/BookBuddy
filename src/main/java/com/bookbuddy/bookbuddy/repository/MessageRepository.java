@@ -6,9 +6,11 @@ package com.bookbuddy.bookbuddy.repository;
 
 import com.bookbuddy.bookbuddy.model.Message;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -50,12 +52,19 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     /**
      * Find unread messages for a user in a specific chat
      */
-    @Query("SELECT m FROM Message m WHERE m.chatId = :chatId AND m.senderId != :userId AND m.messageType = 'TEXT' ORDER BY m.createdAt DESC")
+    @Query("SELECT m FROM Message m WHERE m.chatId = :chatId AND m.senderId != :userId AND m.messageType = 'TEXT' AND m.isRead = false ORDER BY m.createdAt DESC")
     List<Message> findUnreadMessagesByChatIdAndUserId(@Param("chatId") Long chatId, @Param("userId") Long userId);
     
     /**
-     * Find the latest message in a chat
+     * Mark all messages in a chat as read for a specific user
      */
-    @Query("SELECT m FROM Message m WHERE m.chatId = :chatId ORDER BY m.createdAt DESC")
-    Message findTopByChatIdOrderByCreatedAtDesc(@Param("chatId") Long chatId);
+    @Modifying
+    @Transactional
+    @Query("UPDATE Message m SET m.isRead = true WHERE m.chatId = :chatId AND m.senderId != :userId AND m.messageType = 'TEXT'")
+    void markMessagesAsRead(@Param("chatId") Long chatId, @Param("userId") Long userId);
+    
+    /**
+     * Find the latest message in a chat (returns only one result)
+     */
+    Message findFirstByChatIdOrderByCreatedAtDesc(Long chatId);
 } 

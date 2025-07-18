@@ -18,7 +18,7 @@ function updateNotificationBadges() {
 
 // Update received requests notification badge
 function updateReceivedRequestsBadge() {
-    fetch('/requests/api/notifications/received-count', { credentials: 'include' })
+    fetch('/requests/api/notifications/received-count-new', { credentials: 'include' })
         .then(response => response.json())
         .then(data => {
             const badge = document.getElementById('received-requests-badge');
@@ -38,7 +38,7 @@ function updateReceivedRequestsBadge() {
 
 // Update sent requests notification badge
 function updateSentRequestsBadge() {
-    fetch('/requests/api/notifications/sent-count', { credentials: 'include' })
+    fetch('/requests/api/notifications/sent-count-new', { credentials: 'include' })
         .then(response => response.json())
         .then(data => {
             const badge = document.getElementById('sent-requests-badge');
@@ -54,6 +54,46 @@ function updateSentRequestsBadge() {
         .catch(error => {
             console.error('Failed to update sent requests badge:', error);
         });
+}
+
+// Mark sent requests as seen (call this when user visits sent requests page)
+function markSentRequestsAsSeen() {
+    fetch('/requests/api/notifications/mark-sent-seen', {
+        method: 'POST',
+        credentials: 'include'
+    })
+    .then(response => {
+        if (response.ok) {
+            // Update the badge immediately to hide it
+            const badge = document.getElementById('sent-requests-badge');
+            if (badge) {
+                badge.style.display = 'none';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Failed to mark sent requests as seen:', error);
+    });
+}
+
+// Mark received requests as seen (call this when user visits received requests page)
+function markReceivedRequestsAsSeen() {
+    fetch('/requests/api/notifications/mark-received-seen', {
+        method: 'POST',
+        credentials: 'include'
+    })
+    .then(response => {
+        if (response.ok) {
+            // Update the badge immediately to hide it
+            const badge = document.getElementById('received-requests-badge');
+            if (badge) {
+                badge.style.display = 'none';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Failed to mark received requests as seen:', error);
+    });
 }
 
 // Check if user is authenticated
@@ -75,5 +115,7 @@ window.notifications = {
     updateNotificationBadges,
     updateReceivedRequestsBadge,
     updateSentRequestsBadge,
+    markReceivedRequestsAsSeen,
+    markSentRequestsAsSeen,
     initNotifications
 }; 

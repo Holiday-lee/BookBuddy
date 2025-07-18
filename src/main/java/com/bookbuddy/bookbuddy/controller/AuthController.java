@@ -75,13 +75,6 @@ public class AuthController {
     public Map<String, Object> getCurrentUser(HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         
-        // Debug session information
-        System.out.println("=== Session Debug ===");
-        System.out.println("Session ID: " + session.getId());
-        System.out.println("Session Creation Time: " + new java.util.Date(session.getCreationTime()));
-        System.out.println("Session Last Accessed Time: " + new java.util.Date(session.getLastAccessedTime()));
-        System.out.println("Session Max Inactive Interval: " + session.getMaxInactiveInterval());
-        
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
         if (authentication != null && authentication.isAuthenticated() 
@@ -93,29 +86,20 @@ public class AuthController {
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
                 response.put("authenticated", true);
+                response.put("id", user.getId());
                 response.put("email", user.getEmail());
                 response.put("firstName", user.getFirstName());
                 response.put("lastName", user.getLastName());
                 response.put("userId", user.getId());
                 response.put("createdAt", user.getCreatedAt());
-                System.out.println("User authenticated: " + user.getEmail());
             } else {
                 response.put("authenticated", false);
                 response.put("message", "User not found");
-                System.out.println("User not found in database");
             }
         } else {
             response.put("authenticated", false);
             response.put("message", "Not logged in");
-            System.out.println("Not authenticated or anonymous user");
-            if (authentication != null) {
-                System.out.println("Authentication principal: " + authentication.getPrincipal());
-                System.out.println("Authentication name: " + authentication.getName());
-                System.out.println("Authentication authenticated: " + authentication.isAuthenticated());
-            }
         }
-        
-        System.out.println("=== End Session Debug ===");
         
         return response;
     }

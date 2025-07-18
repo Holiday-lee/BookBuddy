@@ -16,6 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Service for handling chat conversations
@@ -178,16 +181,23 @@ public class ChatService {
      * Find all chats for a user
      */
     @Transactional(readOnly = true)
-    public List<Chat> findAllChatsByUser(Long userId) {
+    public List<Chat> findByUserId(Long userId) {
         return chatRepository.findAllChatsByUserId(userId);
     }
     
     /**
-     * Find chat between two users for a specific book
+     * Get the last message in a chat
      */
     @Transactional(readOnly = true)
-    public Optional<Chat> findChatByBookAndUsers(Long bookId, Long user1Id, Long user2Id) {
-        return chatRepository.findChatByBookAndUsers(bookId, user1Id, user2Id);
+    public Optional<Message> getLastMessage(Long chatId) {
+        try {
+            Message message = messageRepository.findFirstByChatIdOrderByCreatedAtDesc(chatId);
+            return Optional.ofNullable(message);
+        } catch (Exception e) {
+            // Log the exception for debugging
+            System.err.println("Error getting last message for chat " + chatId + ": " + e.getMessage());
+            return Optional.empty();
+        }
     }
     
     /**
@@ -207,11 +217,68 @@ public class ChatService {
     }
     
     /**
+     * Mark all messages in a chat as read for a specific user
+     */
+    @Transactional
+    public void markMessagesAsRead(Long chatId, Long userId) {
+        // Verify the user is part of the chat
+        Chat chat = chatRepository.findById(chatId)
+                .orElseThrow(() -> new IllegalArgumentException("Chat not found"));
+        
+        if (!chat.involvesUser(userId)) {
+            throw new IllegalArgumentException("You are not part of this chat");
+        }
+        
+        messageRepository.markMessagesAsRead(chatId, userId);
+    }
+    
+    /**
      * Get the latest message in a chat
      */
     @Transactional(readOnly = true)
     public Message getLatestMessage(Long chatId) {
-        return messageRepository.findTopByChatIdOrderByCreatedAtDesc(chatId);
+        return messageRepository.findFirstByChatIdOrderByCreatedAtDesc(chatId);
+    }
+    
+    /**
+     * Get enhanced chat information for listing
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getEnhancedActiveChatsForUser(Long userId) {
+        List<Chat> chats = findActiveChatsByUser(userId);
+        List<Map<String, Object>> enhancedChats = new ArrayList<>();
+        
+        for (Chat chat : chats) {
+            Map<String, Object> enhancedChat = new HashMap<>();
+            enhancedChat.put("id", chat.getId());
+            enhancedChat.put("status", chat.getStatus());
+            enhancedChat.put("createdAt", chat.getCreatedAt());
+            enhancedChat.put("updatedAt", chat.getUpdatedAt());
+            
+            // Get the other user's information
+            Long otherUserId = chat.getUser1Id().equals(userId) ? chat.getUser2Id() : chat.getUser1Id();
+            enhancedChat.put("otherUserId", otherUserId);
+            
+            // Get the latest message
+            Message latestMessage = getLatestMessage(chat.getId());
+            if (latestMessage != null) {
+                enhancedChat.put("lastMessage", latestMessage.getContent());
+                enhancedChat.put("lastMessageTime", latestMessage.getCreatedAt());
+                enhancedChat.put("lastMessageType", latestMessage.getMessageType());
+            } else {
+                enhancedChat.put("lastMessage", "No messages yet");
+                enhancedChat.put("lastMessageTime", chat.getCreatedAt());
+                enhancedChat.put("lastMessageType", "SYSTEM");
+            }
+            
+            // Get unread count
+            long unreadCount = getUnreadMessageCount(chat.getId(), userId);
+            enhancedChat.put("unreadCount", unreadCount);
+            
+            enhancedChats.add(enhancedChat);
+        }
+        
+        return enhancedChats;
     }
     
     /**

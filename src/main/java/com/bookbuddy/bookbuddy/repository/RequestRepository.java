@@ -21,24 +21,24 @@ import java.util.Optional;
 public interface RequestRepository extends JpaRepository<Request, Long> {
     
     /**
-     * Find requests by book ID
+     * Find requests by book ID, sorted by creation date (newest first)
      */
-    List<Request> findByBookId(Long bookId);
+    List<Request> findByBookIdOrderByCreatedAtDesc(Long bookId);
     
     /**
-     * Find requests by requester ID
+     * Find requests by requester ID, sorted by creation date (newest first)
      */
-    List<Request> findByRequesterId(Long requesterId);
+    List<Request> findByRequesterIdOrderByCreatedAtDesc(Long requesterId);
     
     /**
-     * Find requests by owner ID
+     * Find requests by owner ID, sorted by creation date (newest first)
      */
-    List<Request> findByOwnerId(Long ownerId);
+    List<Request> findByOwnerIdOrderByCreatedAtDesc(Long ownerId);
     
     /**
-     * Find pending requests by book ID
+     * Find pending requests by book ID, sorted by creation date (newest first)
      */
-    List<Request> findByBookIdAndStatus(Long bookId, Request.RequestStatus status);
+    List<Request> findByBookIdAndStatusOrderByCreatedAtDesc(Long bookId, Request.RequestStatus status);
     
     /**
      * Find requests by requester and book
@@ -46,15 +46,15 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     Optional<Request> findByRequesterIdAndBookId(Long requesterId, Long bookId);
     
     /**
-     * Find active requests by requester ID
+     * Find active requests by requester ID, sorted by creation date (newest first)
      */
-    @Query("SELECT r FROM Request r WHERE r.requesterId = :requesterId AND r.status IN ('PENDING', 'ACCEPTED')")
+    @Query("SELECT r FROM Request r WHERE r.requesterId = :requesterId AND r.status IN ('PENDING', 'ACCEPTED') ORDER BY r.createdAt DESC")
     List<Request> findActiveRequestsByRequesterId(@Param("requesterId") Long requesterId);
     
     /**
-     * Find active requests by owner ID
+     * Find active requests by owner ID, sorted by creation date (newest first)
      */
-    @Query("SELECT r FROM Request r WHERE r.ownerId = :ownerId AND r.status IN ('PENDING', 'ACCEPTED')")
+    @Query("SELECT r FROM Request r WHERE r.ownerId = :ownerId AND r.status IN ('PENDING', 'ACCEPTED') ORDER BY r.createdAt DESC")
     List<Request> findActiveRequestsByOwnerId(@Param("ownerId") Long ownerId);
     
     /**

@@ -317,6 +317,45 @@ public class RequestController {
     }
     
     /**
+     * Mark received requests as seen (clear the received requests badge)
+     */
+    @PostMapping("/api/notifications/mark-received-seen")
+    @ResponseBody
+    public ResponseEntity<?> markReceivedRequestsAsSeen(HttpSession session) {
+        try {
+            Long userId = getCurrentUserId();
+            // Store the current count in session to track what the user has seen
+            long currentCount = requestService.countPendingRequestsByOwner(userId);
+            session.setAttribute("receivedRequestsSeenCount", currentCount);
+            return ResponseEntity.ok(Map.of("message", "Received requests marked as seen"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    /**
+     * Get notification count for received requests (only show new requests since last seen)
+     */
+    @GetMapping("/api/notifications/received-count-new")
+    @ResponseBody
+    public ResponseEntity<?> getNewReceivedRequestsNotificationCount(HttpSession session) {
+        try {
+            Long userId = getCurrentUserId();
+            long currentCount = requestService.countPendingRequestsByOwner(userId);
+            Long seenCount = (Long) session.getAttribute("receivedRequestsSeenCount");
+            
+            if (seenCount == null) {
+                seenCount = 0L;
+            }
+            
+            long newCount = Math.max(0, currentCount - seenCount);
+            return ResponseEntity.ok(Map.of("count", newCount));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    /**
      * Get notification count for sent requests (updates on sent requests)
      */
     @GetMapping("/api/notifications/sent-count")
@@ -326,6 +365,45 @@ public class RequestController {
             Long userId = getCurrentUserId();
             long count = requestService.countUpdatedSentRequests(userId);
             return ResponseEntity.ok(Map.of("count", count));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    /**
+     * Mark sent requests as seen (clear the sent requests badge)
+     */
+    @PostMapping("/api/notifications/mark-sent-seen")
+    @ResponseBody
+    public ResponseEntity<?> markSentRequestsAsSeen(HttpSession session) {
+        try {
+            Long userId = getCurrentUserId();
+            // Store the current count in session to track what the user has seen
+            long currentCount = requestService.countUpdatedSentRequests(userId);
+            session.setAttribute("sentRequestsSeenCount", currentCount);
+            return ResponseEntity.ok(Map.of("message", "Sent requests marked as seen"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    /**
+     * Get notification count for sent requests (only show new updates since last seen)
+     */
+    @GetMapping("/api/notifications/sent-count-new")
+    @ResponseBody
+    public ResponseEntity<?> getNewSentRequestsNotificationCount(HttpSession session) {
+        try {
+            Long userId = getCurrentUserId();
+            long currentCount = requestService.countUpdatedSentRequests(userId);
+            Long seenCount = (Long) session.getAttribute("sentRequestsSeenCount");
+            
+            if (seenCount == null) {
+                seenCount = 0L;
+            }
+            
+            long newCount = Math.max(0, currentCount - seenCount);
+            return ResponseEntity.ok(Map.of("count", newCount));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
         }
