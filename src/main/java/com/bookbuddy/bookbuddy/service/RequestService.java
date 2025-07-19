@@ -254,6 +254,9 @@ public class RequestService {
         // Update book status based on request type
         if (request.isGiveAwayRequest()) {
             bookService.markAsGivenAway(request.getBookId());
+        } else if (request.isLendRequest()) {
+            // For lending requests, mark book as available again (returned)
+            bookService.markAsAvailable(request.getBookId());
         } else if (request.isSwapRequest()) {
             bookService.markAsSwapped(request.getBookId());
             if (request.getOfferedBookId() != null) {

@@ -590,6 +590,24 @@ public class ChatController {
     }
 
     /**
+     * REST API: Get total unread chat messages count for notifications
+     */
+    @GetMapping("/api/chat/notifications/unread-count")
+    @ResponseBody
+    public ResponseEntity<?> getUnreadChatMessagesCount() {
+        try {
+            Long userId = getCurrentUserId();
+            long totalUnreadCount = chatService.getTotalUnreadMessageCount(userId);
+            return ResponseEntity.ok(Map.of("count", totalUnreadCount));
+            
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to get unread count"));
+        }
+    }
+
+    /**
      * REST API: Get chat by request ID with enhanced information
      */
     @GetMapping("/api/chat/request/{requestId}/details")

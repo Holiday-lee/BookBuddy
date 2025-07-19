@@ -124,9 +124,6 @@ public class RequestController {
             Long userId = getCurrentUserId();
             Request request = requestService.acceptRequest(requestId, userId);
             
-            // Create chat for accepted request
-            chatService.createChatForRequest(requestId);
-            
             return ResponseEntity.ok(request);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

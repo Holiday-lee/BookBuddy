@@ -262,7 +262,7 @@
                     
                     if (!data.authenticated) {
                         console.log('User not authenticated, redirecting to login');
-                        alert('Please log in to request books');
+                        alert('Please login or signup to request books. You can create an account to start requesting books from other users.');
                         window.location.href = '/pages/login.html';
                         return;
                     }
@@ -299,7 +299,7 @@
                 })
                 .catch(error => {
                     console.error('Auth check failed:', error);
-                    alert('Please log in to request books');
+                    alert('Please login or signup to request books. You can create an account to start requesting books from other users.');
                     window.location.href = '/pages/login.html';
                 });
         }
@@ -349,7 +349,12 @@
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    alert('Error: ' + data.error);
+                    // Check if it's an authentication error
+                    if (data.error === 'Not authenticated') {
+                        alert('Please login or signup to request books. You can create an account to start requesting books from other users.');
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
                 } else {
                     alert('Request sent successfully! The book owner will be notified.');
                     // Refresh the page to show updated status

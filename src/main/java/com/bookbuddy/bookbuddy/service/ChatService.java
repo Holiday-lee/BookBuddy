@@ -221,7 +221,7 @@ public class ChatService {
      */
     @Transactional
     public void markMessagesAsRead(Long chatId, Long userId) {
-        // Verify the user is part of the chat
+        // Verify the user is part of this chat
         Chat chat = chatRepository.findById(chatId)
                 .orElseThrow(() -> new IllegalArgumentException("Chat not found"));
         
@@ -230,6 +230,21 @@ public class ChatService {
         }
         
         messageRepository.markMessagesAsRead(chatId, userId);
+    }
+
+    /**
+     * Get total unread message count for a user across all chats
+     */
+    @Transactional(readOnly = true)
+    public long getTotalUnreadMessageCount(Long userId) {
+        List<Chat> userChats = findActiveChatsByUser(userId);
+        long totalUnread = 0;
+        
+        for (Chat chat : userChats) {
+            totalUnread += getUnreadMessageCount(chat.getId(), userId);
+        }
+        
+        return totalUnread;
     }
     
     /**

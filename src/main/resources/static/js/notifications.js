@@ -14,6 +14,9 @@ function updateNotificationBadges() {
     
     // Update sent requests badge
     updateSentRequestsBadge();
+    
+    // Update chat badge
+    updateChatBadge();
 }
 
 // Update received requests notification badge
@@ -53,6 +56,26 @@ function updateSentRequestsBadge() {
         })
         .catch(error => {
             console.error('Failed to update sent requests badge:', error);
+        });
+}
+
+// Update chat notification badge
+function updateChatBadge() {
+    fetch('/api/chat/notifications/unread-count', { credentials: 'include' })
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.getElementById('chat-badge');
+            if (badge) {
+                if (data.count > 0) {
+                    badge.textContent = data.count;
+                    badge.style.display = 'inline';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Failed to update chat badge:', error);
         });
 }
 
@@ -115,6 +138,7 @@ window.notifications = {
     updateNotificationBadges,
     updateReceivedRequestsBadge,
     updateSentRequestsBadge,
+    updateChatBadge,
     markReceivedRequestsAsSeen,
     markSentRequestsAsSeen,
     initNotifications
