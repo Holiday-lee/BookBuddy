@@ -18,7 +18,7 @@ import org.hibernate.annotations.UpdateTimestamp;
  */
 @Entity
 @Table(name = "users")
-public class User {
+public class User{
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,10 +53,10 @@ public class User {
     private LocalDateTime updatedAt;
     
     // Default constructor
-    public User() {}
+    public User(){}
     
     // Constructor with required fields
-    public User(String email, String password, String firstName, String lastName) {
+    public User(String email, String password, String firstName, String lastName){
         this.email = email;
         this.password = password;
         this.firstName = firstName;
@@ -64,69 +64,69 @@ public class User {
     }
     
     // Getters and Setters
-    public Long getId() {
+    public Long getId(){
         return id;
     }
     
-    public void setId(Long id) {
+    public void setId(Long id){
         this.id = id;
     }
     
-    public String getEmail() {
+    public String getEmail(){
         return email;
     }
     
-    public void setEmail(String email) {
+    public void setEmail(String email){
         this.email = email;
     }
     
-    public String getPassword() {
+    public String getPassword(){
         return password;
     }
     
-    public void setPassword(String password) {
+    public void setPassword(String password){
         this.password = password;
     }
     
-    public String getFirstName() {
+    public String getFirstName(){
         return firstName;
     }
     
-    public void setFirstName(String firstName) {
+    public void setFirstName(String firstName){
         this.firstName = firstName;
     }
     
-    public String getLastName() {
+    public String getLastName(){
         return lastName;
     }
     
-    public void setLastName(String lastName) {
+    public void setLastName(String lastName){
         this.lastName = lastName;
     }
     
-    public LocalDateTime getCreatedAt() {
+    public LocalDateTime getCreatedAt(){
         return createdAt;
     }
     
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt){
         this.createdAt = createdAt;
     }
     
-    public LocalDateTime getUpdatedAt() {
+    public LocalDateTime getUpdatedAt(){
         return updatedAt;
     }
     
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(LocalDateTime updatedAt){
         this.updatedAt = updatedAt;
     }
     
     // Utility method
-    public String getFullName() {
+    public String getFullName(){
         return firstName + " " + lastName;
     }
     
     @Override
-    public String toString() {
+    public String toString(){
         return "User{" +
                 "id=" + id +
                 ", email='" + email + '\'' +
@@ -137,16 +137,21 @@ public class User {
     }
     
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(Object o){
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass()) return false; //null or different class
         
-        User user = (User) o;
-        return id != null ? id.equals(user.id) : user.id == null;
+        User user = (User) o; // safe cast from Object to User
+        // return id != null ? id.equals(user.id) : user.id == null; // compare by id
+        if (id != null) {
+            return id.equals(user.id);
+        } else {
+            return user.id == null;
+        }
     }
     
     @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
+    public int hashCode(){
+        return id != null ? id.hashCode() : 0; //If id is not null, return its hash code or If id is null, return 0
     }
 }

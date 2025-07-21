@@ -91,7 +91,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                     
                     <!-- AFTER LOGIN WILL SHOW AS -->
                     <div id="user-menu" class="auth-required dropdown" style="display: none;">
-                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"> <!--dropdown-toggle=the little arrow//data-bs-toggle="dropdown =When clicked, open the dropdown menu connected to this button -->
                             <span id="user-name">User</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
@@ -113,7 +113,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
 
     <!-- Static Banner -->
     <div class="banner-container position-relative text-center">
-        <a href="/pages/search-books.html">
+        <a href="/pages/search-books.html" class="banner-link">
             <img src="/images/book-swap.png" class="img-fluid w-100" alt="BookBuddy Banner">
         </a>
     </div>
@@ -122,10 +122,13 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
     <section class="container my-5">
         <h2 class="text-center mb-4">About BookBuddy</h2>
         <p class="lead mb-3">
-            BookBuddy is a location-based web platform designed to help users exchange books with others nearby. Unlike traditional book-swapping platforms that might rely on global shipping, BookBuddy focuses on local, person-to-person swaps, making book swapping easier, faster, and more community-oriented. This platform allows users to list books they no longer need, search for books nearby, and arrange swaps with others through a secure and user-friendly interface. Whether it's a novel, a textbook, or a hidden gem, BookBuddy makes it simple to give books a second life.
+            BookBuddy is a community-powered web app that turns your personal book collection into a neighbor-friendly library. Whether you're ready to give a book away, lend it for a while, or swap it for something new, BookBuddy makes sharing books safe, simple, and local.
         </p>
         <p class="lead">
-            The target users of the app are local communities, university and campus communities, or book lovers who are interested in discovering new titles through nearby, person-to-person exchanges. BookBuddy's aim is to encourage local sharing, cut down on waste, and make finding books more affordable and social.
+            Unlike traditional book-sharing platforms that rely on global shipping or impersonal exchanges, BookBuddy focuses on location-based, person-to-person interactions. Users list their books, choose how they want to share them, and coordinate pickup directly with others nearby. It’s a sustainable way to declutter your shelves, discover new reads, and build community connections.
+        </p>
+        <p class="lead">
+            Whether you're a student, a passionate reader, or someone who just wants to share knowledge, BookBuddy helps you give, lend, or swap books — all on your terms.
         </p>
     </section>
 
@@ -146,8 +149,8 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
         <div class="col">
             <div class="card h-100 border-0">
             <div class="card-body">
-                <h5 class="card-title">2. List Books You Want to Swap</h5>
-                <p class="card-text">Add books from your collection that you're ready to share. Include details like title, author, genre, and condition — plus upload photos to attract other readers.</p>
+                <h5 class="card-title">2. List Your Books</h5>
+                <p class="card-text">Add books to your virtual shelf and choose how you'd like to share them: Give Away – Let someone take it for free. Lend – Set a return period and lend it out. Swap – Offer your book in exchange for one from another user. You'll also choose a pickup area to meet safely — no exact address required.</p>
             </div>
             </div>
         </div>
@@ -156,7 +159,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             <div class="card h-100 border-0">
             <div class="card-body">
                 <h5 class="card-title">3. Find Books Nearby</h5>
-                <p class="card-text">Use BookBuddy's location-based search to browse books listed by users near you. Filter by radius, title, author, or genre to find your next great read close to home.</p>
+                <p class="card-text">Use your location to search for books available around you. Filter by genre, title, or author, and discover what others are offering in your area.</p>
             </div>
             </div>
         </div>
@@ -164,8 +167,8 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
         <div class="col">
             <div class="card h-100 border-0">
             <div class="card-body">
-                <h5 class="card-title">4. Send and Receive Swap Requests</h5>
-                <p class="card-text">When you find a book you want, send a swap request to the owner. Manage incoming and outgoing requests easily through your dashboard.</p>
+                <h5 class="card-title">4. Send a Request</h5>
+                <p class="card-text">Interested in a book? Just send a request: For giveaways and loans, the owner can approve or decline. For swaps, you'll offer one of your own books in return. Once accepted, a chat opens for pickup planning.</p>
             </div>
             </div>
         </div>
@@ -173,8 +176,8 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
         <div class="col">
             <div class="card h-100 border-0">
             <div class="card-body">
-                <h5 class="card-title">5. Chat and Arrange the Swap</h5>
-                <p class="card-text">Use the built-in chat system to coordinate pickup details, ask questions, or suggest swaps — all securely within the app.</p>
+                <h5 class="card-title">5. Meet Up and Exchange</h5>
+                <p class="card-text">Arrange a time to meet. After the exchange, users confirm the swap, return, or giveaway — and the book status updates automatically.</p>
             </div>
             </div>
         </div>
@@ -234,20 +237,22 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
         });
 
         //  Checks if user is log in using an API end point
-        async function checkAuthenticationStatus() {
-            try {
+        //async + await fetch() =Wait for the fetch to finish getting data from the server before moving on to the next line.
+        async function checkAuthenticationStatus(){
+            try{
+                //The credentials:'include' ensures cookies (like a session token) are sent along, important for auth.
                 const response = await fetch('/api/current-user', { credentials: 'include' }); // call API endpoint on the server
-                if (response.ok) {
+                if (response.ok){
                     const user = await response.json(); // the endpoint return in json
-                    if (user && user.authenticated) { // if user is logged in 
+                    if(user && user.authenticated){ // if user is logged in 
                         showAuthenticatedNavbar(user); // run this method 
-                    } else {
+                    }else{
                         showPublicNavbar(); //run this only show public navbar
                     }
-                } else {
+                }else{
                     showPublicNavbar();
                 }
-            } catch (error) {
+            }catch(error){
                 console.error('Error checking authentication:', error);
                 showPublicNavbar();
             }
@@ -256,46 +261,46 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
         // after logged in view navbar & right side user info menu 
         function showAuthenticatedNavbar(user) {
             // Hide login/signup buttons
-            document.getElementById('auth-buttons').style.display = 'none';
+            document.getElementById('auth-buttons').style.display='none';
             
             // Show authenticated navbar items
             document.querySelectorAll('.auth-required').forEach(item => {
-                item.style.display = 'block';
+                item.style.display='block';
             });
             
             // Show user menu
-            document.getElementById('user-menu').style.display = 'block';
+            document.getElementById('user-menu').style.display='block';
             
             // Update user name
-            document.getElementById('user-name').textContent = user.firstName || 'User';
+            document.getElementById('user-name').textContent=user.firstName || 'User';
             
             // Initialize notifications
-            if (window.notifications) {
+            if (window.notifications){
                 window.notifications.initNotifications();
             }
         }
 
         // Shows login/sign up buttons if not log in.
-        function showPublicNavbar() {
+        function showPublicNavbar(){
             // Show login/signup buttons
-            document.getElementById('auth-buttons').style.display = 'flex';
+            document.getElementById('auth-buttons').style.display = 'flex'; //if use Block, they will bcome 2 rows, not next to each other
             
             // Hide authenticated features
             const authRequired = document.querySelectorAll('.auth-required');
-            authRequired.forEach(element => {
+            authRequired.forEach(element =>{
                 element.style.display = 'none';
             });
         }
 
         // shows success/error URL messages 
-        function displayFlashMessages() {
+        function displayFlashMessages(){
             const urlParams = new URLSearchParams(window.location.search);
             const flashContainer = document.getElementById('flash-messages');
             
-            if (urlParams.get('success')) {
+            if(urlParams.get('success')){
                 showFlashMessage('success', decodeURIComponent(urlParams.get('success')));
             }
-            if (urlParams.get('error')) {
+            if(urlParams.get('error')){
                 showFlashMessage('danger', decodeURIComponent(urlParams.get('error')));
             }
         }

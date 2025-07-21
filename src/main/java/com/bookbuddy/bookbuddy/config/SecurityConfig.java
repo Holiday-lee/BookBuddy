@@ -26,12 +26,12 @@ import java.util.Arrays;
  */
 @Configuration 
 @EnableWebSecurity
-public class SecurityConfig {
+public class SecurityConfig{
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
         http
-            .authorizeHttpRequests(auth -> auth
+            .authorizeHttpRequests(auth->auth
                 // Public access - available to everyone
                 .requestMatchers("/", "/index.html", "/pages/login.html", "/pages/register.html").permitAll()
                 
@@ -66,7 +66,7 @@ public class SecurityConfig {
             )
             
             // Custom form login configuration
-            .formLogin(form -> form
+            .formLogin(form->form
                 .loginPage("/pages/login.html")
                 .loginProcessingUrl("/login")
                 .defaultSuccessUrl("/", true)  // Redirect to home after successful login
@@ -75,7 +75,7 @@ public class SecurityConfig {
             )
             
             // Logout configuration
-            .logout(logout -> logout
+            .logout(logout->logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/")
                 .invalidateHttpSession(true)
@@ -84,22 +84,22 @@ public class SecurityConfig {
             )
             
             // Session management
-            .sessionManagement(session -> session
+            .sessionManagement(session->session
                 .maximumSessions(5)  // Allow up to 5 sessions per user
                 .maxSessionsPreventsLogin(false)
             )
             
             // CORS configuration
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .cors(cors->cors.configurationSource(corsConfigurationSource()))
             
             // Disable CSRF for easier testing (re-enable in production)
-            .csrf(csrf -> csrf.disable());
+            .csrf(csrf->csrf.disable());
             
         return http.build();
     }
     
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
@@ -113,7 +113,7 @@ public class SecurityConfig {
     }
     
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
     }
 }
