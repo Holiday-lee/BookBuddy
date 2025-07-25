@@ -182,14 +182,7 @@ public class BookController {
     
     // ... (keep all your existing API methods from the original controller)
     
-    /**
-     * API: Get all available books
-     */
-    @GetMapping("/api/all")
-    @ResponseBody
-    public List<Book> getAllBooks() {
-        return bookService.findAllAvailableBooks();
-    }
+
     
 
     
@@ -339,16 +332,7 @@ public class BookController {
         return ResponseEntity.ok(enhancedBooks);
     }
     
-    /**
-     * API: Find books nearby
-     */
-    @GetMapping("/api/nearby")
-    @ResponseBody
-    public List<Book> findNearbyBooks(@RequestParam("lat") double latitude,
-                                     @RequestParam("lng") double longitude,
-                                     @RequestParam(value = "radius", defaultValue = "5") double radius) {
-        return bookService.findBooksNearby(latitude, longitude, radius);
-    }
+
     
     /**
      * API: Get book details
@@ -497,14 +481,7 @@ public class BookController {
         }
     }
     
-    /**
-     * API: Get available swap books
-     */
-    @GetMapping("/api/swap")
-    @ResponseBody
-    public List<Book> getSwapBooks() {
-        return bookService.findAvailableSwapBooks();
-    }
+
     
     /**
      * API: Get swappable books by owner
@@ -567,147 +544,11 @@ public class BookController {
         }
     }
 
-    /**
-     * API: Delete books owned by tester users
-     */
-    @DeleteMapping("/api/delete-tester-books")
-    @ResponseBody
-    public ResponseEntity<?> deleteTesterBooks(HttpSession session) {
-        try {
-            // Get current user from Spring Security authentication
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !authentication.isAuthenticated() || 
-                "anonymousUser".equals(authentication.getPrincipal())) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-            }
-            
-            // Get user by email from authentication
-            String email = authentication.getName();
-            Optional<User> userOpt = userService.findByEmail(email);
-            if (userOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User not found"));
-            }
-            
-            // Find all users with "test" in their email or name
-            List<User> allUsers = userService.getAllUsers();
-            List<User> testerUsers = allUsers.stream()
-                .filter(user -> user.getEmail().toLowerCase().contains("test") || 
-                              user.getFirstName().toLowerCase().contains("test") ||
-                              user.getLastName().toLowerCase().contains("test"))
-                .collect(Collectors.toList());
-            
-            int deletedBooks = 0;
-            for (User testerUser : testerUsers) {
-                List<Book> userBooks = bookService.findBooksByOwner(testerUser.getId());
-                for (Book book : userBooks) {
-                    bookService.deleteBook(book.getId(), testerUser.getId());
-                    deletedBooks++;
-                }
-            }
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Deleted " + deletedBooks + " books from " + testerUsers.size() + " tester users");
-            response.put("deletedBooks", deletedBooks);
-            response.put("testerUsers", testerUsers.size());
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Failed to delete tester books: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
 
-    /**
-     * API: Delete all books (for development/testing purposes)
-     */
-    @DeleteMapping("/api/admin/delete-all-books")
-    @ResponseBody
-    public ResponseEntity<?> deleteAllBooks(HttpSession session) {
-        try {
-            // Get current user from Spring Security authentication
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !authentication.isAuthenticated() || 
-                "anonymousUser".equals(authentication.getPrincipal())) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
-            }
-            
-            // Get user by email from authentication
-            String email = authentication.getName();
-            Optional<User> userOpt = userService.findByEmail(email);
-            if (userOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User not found"));
-            }
-            
-            // Get all books
-            List<Book> allBooks = bookService.findAllBooks();
-            int deletedBooks = 0;
-            
-            for (Book book : allBooks) {
-                try {
-                    bookService.deleteBook(book.getId(), book.getOwnerId());
-                    deletedBooks++;
-                } catch (Exception e) {
-                    // Skip books that can't be deleted (e.g., have pending requests)
-                    System.out.println("Could not delete book " + book.getId() + ": " + e.getMessage());
-                }
-            }
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Deleted " + deletedBooks + " books out of " + allBooks.size() + " total books");
-            response.put("deletedBooks", deletedBooks);
-            response.put("totalBooks", allBooks.size());
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Failed to delete all books: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
 
-    /**
-     * API: Delete all books (simple version for development)
-     */
-    @DeleteMapping("/api/clear-all-books")
-    @ResponseBody
-    public ResponseEntity<?> clearAllBooks() {
-        try {
-            // Get all books
-            List<Book> allBooks = bookService.findAllBooks();
-            int deletedBooks = 0;
-            
-            for (Book book : allBooks) {
-                try {
-                    bookService.deleteBook(book.getId(), book.getOwnerId());
-                    deletedBooks++;
-                } catch (Exception e) {
-                    // Skip books that can't be deleted (e.g., have pending requests)
-                    System.out.println("Could not delete book " + book.getId() + ": " + e.getMessage());
-                }
-            }
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Deleted " + deletedBooks + " books out of " + allBooks.size() + " total books");
-            response.put("deletedBooks", deletedBooks);
-            response.put("totalBooks", allBooks.size());
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Failed to delete all books: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
+
+
+
 
 
 }

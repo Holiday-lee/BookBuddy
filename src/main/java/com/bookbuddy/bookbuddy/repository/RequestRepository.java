@@ -41,11 +41,6 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     List<Request> findByBookIdAndStatusOrderByCreatedAtDesc(Long bookId, Request.RequestStatus status);
     
     /**
-     * Find requests by requester and book
-     */
-    Optional<Request> findByRequesterIdAndBookId(Long requesterId, Long bookId);
-    
-    /**
      * Find active requests by requester ID, sorted by creation date (newest first)
      */
     @Query("SELECT r FROM Request r WHERE r.requesterId = :requesterId AND r.status IN ('PENDING', 'ACCEPTED') ORDER BY r.createdAt DESC")
@@ -58,24 +53,9 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     List<Request> findActiveRequestsByOwnerId(@Param("ownerId") Long ownerId);
     
     /**
-     * Find requests by type and status
-     */
-    List<Request> findByRequestTypeAndStatus(Request.RequestType requestType, Request.RequestStatus status);
-    
-    /**
-     * Find swap requests by offered book ID
-     */
-    List<Request> findByOfferedBookId(Long offeredBookId);
-    
-    /**
      * Check if there's a pending request for a book by a specific user
      */
     boolean existsByBookIdAndRequesterIdAndStatus(Long bookId, Long requesterId, Request.RequestStatus status);
-    
-    /**
-     * Count pending requests for a book
-     */
-    long countByBookIdAndStatus(Long bookId, Request.RequestStatus status);
     
     /**
      * Count requests by owner and status

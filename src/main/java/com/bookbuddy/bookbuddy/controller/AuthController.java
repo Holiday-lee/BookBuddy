@@ -222,32 +222,4 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-
-    /**
-     * Debug endpoint to check session information
-     */
-    @GetMapping("/api/debug-session")
-    @ResponseBody
-    public Map<String, Object> debugSession(HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
-        
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
-        response.put("sessionId", session.getId());
-        response.put("sessionCreationTime", new java.util.Date(session.getCreationTime()));
-        response.put("sessionLastAccessedTime", new java.util.Date(session.getLastAccessedTime()));
-        response.put("sessionMaxInactiveInterval", session.getMaxInactiveInterval());
-        
-        if (authentication != null) {
-            response.put("authenticationName", authentication.getName());
-            response.put("authenticationAuthenticated", authentication.isAuthenticated());
-            response.put("authenticationPrincipal", authentication.getPrincipal().toString());
-        } else {
-            response.put("authenticationName", "null");
-            response.put("authenticationAuthenticated", false);
-            response.put("authenticationPrincipal", "null");
-        }
-        
-        return response;
-    }
 }

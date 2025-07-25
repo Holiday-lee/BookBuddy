@@ -80,11 +80,7 @@
                             <!-- Search Form -->
                             <form id="searchForm" class="mb-4">
                                 <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label for="searchQuery" class="form-label">Search</label>
-                                        <input type="text" class="form-control" id="searchQuery" 
-                                               placeholder="Search by title, author, or genre">
-                                    </div>
+
                                     <div class="col-md-3">
                                         <label for="sharingTypeFilter" class="form-label">Sharing Type</label>
                                         <select class="form-select" id="sharingTypeFilter">
@@ -94,6 +90,7 @@
                                             <option value="SWAP">Swap</option>
                                         </select>
                                     </div>
+
                                     <div class="col-md-3">
                                         <label for="radiusFilter" class="form-label">Radius (km)</label>
                                         <select class="form-select" id="radiusFilter">
@@ -106,6 +103,13 @@
                                         </select>
                                         <div class="form-text">Select distance range, "All books" to search everywhere, or "Exceed 50 km" for books beyond 50km</div>
                                     </div>
+
+                                    <div class="col-md-6">
+                                        <label for="searchQuery" class="form-label">Search</label>
+                                        <input type="text" class="form-control" id="searchQuery" 
+                                               placeholder="Search by title, author, or genre">
+                                    </div>
+                                    
                                 </div>
                                 <div class="row mt-3">
                                     <div class="col-12">
@@ -663,5 +667,33 @@
             });
         }
         </script>
+        
+        <!-- Footer -->
+        <section class="bg-light text-dark">
+            <div class="container mt-3">
+              <div class="row g-4 justify-content-center">
+                
+                <!-- Follow us centered in full width -->
+                <div class="col-12 text-center mb-5">
+                  <h5 class="category-heading">Follow us</h5>
+                  <div class="d-flex justify-content-center gap-4">
+                    <a href="https://www.facebook.com/NCIRL/" class="fuIcon">
+                      <img src="/images/icons8-facebook-128.png" alt="facebook icon">
+                    </a>
+                    <a href="https://www.instagram.com/ncirl/" class="fuIcon">
+                      <img src="/images/icons8-instagram-160.png" alt="instagram icon">
+                    </a>
+                    <a href="https://x.com/NCIRL" class="fuIcon">
+                      <img src="/images/icons8-twitterx-144.png" alt="twitter icon">
+                    </a>
+                  </div>
+                </div>
+          
+              </div>
+              <div class="col-12 mt-2 pb-2 text-center text-light">
+                &copy; 2025, BookBuddy
+              </div>
+            </div>
+        </section>
     </body>
 </html> 

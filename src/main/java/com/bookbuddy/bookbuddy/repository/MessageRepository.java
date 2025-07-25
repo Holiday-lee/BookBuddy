@@ -34,22 +34,6 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     List<Message> findTop50ByChatIdOrderByCreatedAtDesc(@Param("chatId") Long chatId);
     
     /**
-     * Find messages by sender ID
-     */
-    List<Message> findBySenderId(Long senderId);
-    
-    /**
-     * Find system messages by chat ID
-     */
-    @Query("SELECT m FROM Message m WHERE m.chatId = :chatId AND m.messageType IN ('SYSTEM', 'EXCHANGE_COMPLETED', 'EXCHANGE_CANCELLED') ORDER BY m.createdAt ASC")
-    List<Message> findSystemMessagesByChatId(@Param("chatId") Long chatId);
-    
-    /**
-     * Count messages in a chat
-     */
-    long countByChatId(Long chatId);
-    
-    /**
      * Find unread messages for a user in a specific chat
      */
     @Query("SELECT m FROM Message m WHERE m.chatId = :chatId AND m.senderId != :userId AND m.messageType = 'TEXT' AND m.isRead = false ORDER BY m.createdAt DESC")

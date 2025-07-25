@@ -96,14 +96,6 @@ public class ChatService {
     }
     
     /**
-     * Get recent messages for a chat (for performance)
-     */
-    @Transactional(readOnly = true)
-    public List<Message> getRecentChatMessages(Long chatId) {
-        return messageRepository.findTop50ByChatIdOrderByCreatedAtDesc(chatId);
-    }
-    
-    /**
      * Complete a chat (when exchange is completed)
      */
     public Chat completeChat(Long chatId, Long userId) {

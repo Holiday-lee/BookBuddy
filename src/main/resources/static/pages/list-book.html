@@ -144,7 +144,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                                 
                                 <!--sharing type section-->
                                 <div class="mb-4">
-                                    <h6 class="fw-bold text-primary">📚 Sharing Type</h6>
+                                    <h6 class="fw-bold text-primary">Sharing Type</h6>
                                     
                                     <div class="mb-3">
                                         <label for="sharingType" class="form-label">How would you like to share this book? *</label>
@@ -234,7 +234,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         
         <script>
-        // Global variables
+        //global variables
         let map = null; // hold the map object
         let marker = null; //hold a map pin/maker
         let userLocation = null; //for store user's GPS coordinates
@@ -283,7 +283,9 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             }); // catch error
         }
         
-        // form submission handling for book listing form
+        // form submission handling for book listing form(what it suppose to behave
+        // including: block double click, check if book has set pick-up location(lad.long)
+        // including:call API endpoint, then message(success or fail)
         function setupFormHandling(){
             
             const form = document.getElementById('listBookForm');
@@ -305,25 +307,25 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                 const latitude = document.getElementById('latitude').value;
                 const longitude = document.getElementById('longitude').value;
                 
-                if (!latitude || !longitude) {
+                if (!latitude || !longitude){
                     showAlert('warning', 'Please select a pickup location using one of the location buttons.');
                     submitBtn.disabled = false;
                     return;
                 }
                 
-                function submitForm() {
+                function submitForm(){
                     // prepare form data as URL-encoded string
                     const formData = new URLSearchParams();
                     const formElements = form.elements;
                     for (let i = 0; i < formElements.length; i++) {//goes through each input/field in the form
                         const element = formElements[i];
-                        if (element.name && element.value) {
+                        if (element.name && element.value){
                             formData.append(element.name, element.value);//add the name & value to a URLSearchParams object
                         }
                     }
                     
                     // submit form
-                    fetch('/books/api/list', {
+                    fetch('/books/api/list',{
                         method: 'POST',
                         headers: { //Headers:tells the server the data is URL-encoded
                             'Content-Type': 'application/x-www-form-urlencoded',
@@ -334,7 +336,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                     //response handling
                     //if server redirects(success case),follow the redirect.Otherwise,parse JSON response
                     .then(response => {
-                        if (response.redirected) {
+                        if (response.redirected){
                             window.location.href = response.url;
                             return;
                         }
@@ -342,13 +344,13 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                     })
                     
                     // success/error handling
-                    .then(data => {
-                        if (data && data.success === false) {
+                    .then(data =>{
+                        if (data && data.success === false){
                             showAlert ('danger', data.message || "Failed to list book. Please try again.");
                             
                             // show field-specific errors if available
-                            if (data.errors) {
-                                Object.keys(data.errors).forEach(field => {
+                            if (data.errors){
+                                Object.keys(data.errors).forEach(field =>{
                                     showFieldError(field, data.errors[field]);
                                 });
                             }
@@ -375,20 +377,21 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             });
         }
         
-        // Location features
-        function setupLocationFeatures() {
-            document.getElementById('getCurrentLocation').addEventListener('click', getCurrentLocation);
-            document.getElementById('selectOnMap').addEventListener('click', toggleMap);
+        // location features(share location or select frm map) how to trigger them to work
+        function setupLocationFeatures(){
+            document.getElementById('getCurrentLocation').addEventListener('click', getCurrentLocation);//triger the getCurrentLocation()
+            document.getElementById('selectOnMap').addEventListener('click', toggleMap);//trigger to show the map after clicks selectOnMap icon
         }
         
-        // Sharing type features
-        function setupSharingTypeFeatures() {
+        // book sharing type features: handle to ask for lend duration for lend option
+        function setupSharingTypeFeatures(){
             const sharingTypeSelect = document.getElementById('sharingType');
             const lendingDurationSection = document.getElementById('lendingDurationSection');
             const lendingDurationInput = document.getElementById('lendingDurationDays');
             
-            sharingTypeSelect.addEventListener('change', function() {
-                if (this.value === 'LEND') {
+            //event listener'change'=whenever the user changes the selected option,run the code inside the function
+            sharingTypeSelect.addEventListener('change', function(){
+                if (this.value === 'LEND'){
                     lendingDurationSection.style.display = 'block';
                     lendingDurationInput.required = true;
                 } else {
@@ -399,35 +402,39 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             });
         }
 
-        function getCurrentLocation() {
-            if (!navigator.geolocation) {
+        // ASK FOR CURRECT LOCATION FEATURE
+        function getCurrentLocation(){
+            if (!navigator.geolocation){//checks whether the user's browser supports geolocation
                 showAlert('warning', 'Geolocation is not supported by this browser.');
                 return;
             }
 
             const btn = document.getElementById('getCurrentLocation');
-            btn.disabled = true;
-            btn.innerHTML = '📍 Getting location...';
+            btn.disabled = true;//to prevent multiple clicks
+            btn.innerHTML = '📍 Getting your location...';//visual cue only tht lets user knows we're getting yr location
 
             navigator.geolocation.getCurrentPosition(
-                function(position) {
+                function(position){
+                    //coords=a property f the object tht the browser gives u when u get the user's location
+                    //coords:holds all the geographic data
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
 
                     setLocation(lat, lng);
 
-                    // Try to get address from coordinates
+                    // get human-readable address from coordinates
                     reverseGeocode(lat, lng);
 
-                    btn.disabled = false;
+                    btn.disabled = false; //re-enable button
                     btn.innerHTML = '📍 Use My Current Location';
 
                     updateLocationStatus(`Location set: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
                     showAlert('success', 'Location set successfully! Address will appear below.');
                 },
-                function(error) {
+                function(error){
                     let errorMsg = 'Unable to get location. ';
-                    switch(error.code) {
+                    switch(error.code){
+                        
                         case error.PERMISSION_DENIED:
                             errorMsg += 'Location access denied.';
                             break;
@@ -436,13 +443,13 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                             break;
                         case error.TIMEOUT:
                             errorMsg += 'Location request timed out.';
-                            break;
+                            break;                         
                     }
 
                     showAlert('warning', errorMsg);
 
-                    btn.disabled = false;
-                    btn.innerHTML = '📍 Use My Current Location';
+                    btn.disabled = false; //re-enable the button
+                    btn.innerHTML = '📍 Use My Current Location'; //resets its label
                 },
                 {
                     enableHighAccuracy: true,
@@ -452,28 +459,36 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             );
         }
 
-        function toggleMap() {
+        //SELECT ON MAP FEATURE
+        //shows or hides the map
+        function toggleMap(){
             const mapContainer = document.getElementById('mapContainer');
 
             if (mapContainer.style.display === 'none') {
                 mapContainer.style.display = 'block';
-                initializeMap();
+                initialiseMap();
             } else {
                 mapContainer.style.display = 'none';
             }
         }
 
-        function initializeMap() {
+        //including:create Leaftlet map,load OpenStreetMap tiles,click handler(get coordinate)
+        function initialiseMap(){
             if (map) {
                 map.remove();
             }
 
-            // Default to Dublin coordinates
+            //set default location to Dublin coordinates
             const defaultLat = 53.3498;
             const defaultLng = -6.2603;
 
+            //create a new Leaflet map inside the HTML element with ID "map"
+            //syntax: setView([lat, lng], zoomLevel)
             map = L.map('map').setView([defaultLat, defaultLng], 13);
 
+            //tileLayer adds the visual background map tiles from OpenStreetMap
+            //if not,map will be just a gray box,no streets, cities, background
+            //Leaflet only gives the map container & controls,no actual visual map.
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);
@@ -483,8 +498,8 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                 const lat = e.latlng.lat;
                 const lng = e.latlng.lng;
 
-                setLocation(lat, lng);
-                addMapMarker(lat, lng);
+                setLocation(lat, lng);//saves & updates the coordinates
+                addMapMarker(lat, lng);//shows a marker at the clicked spot
                 reverseGeocode(lat, lng);
                 showAlert('success', 'Location selected! Address will appear below.');
             });
@@ -493,12 +508,14 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             const currentLat = document.getElementById('latitude').value;
             const currentLng = document.getElementById('longitude').value;
 
-            if (currentLat && currentLng) {
-                addMapMarker(parseFloat(currentLat), parseFloat(currentLng));
+            if (currentLat && currentLng) { //if latitude and longitude values exist:
+                //html form inputs are String,so neeed to parse from string->numbers with parseFloat()
+                addMapMarker(parseFloat(currentLat), parseFloat(currentLng));//eg:convert "53.3498"(string)→53.3498(number)
                 map.setView([currentLat, currentLng], 15);
             }
         }
 
+        //to mark the spot(a pin/icon)
         function addMapMarker(lat, lng) {
             if (marker) {
                 map.removeLayer(marker);
@@ -507,6 +524,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             marker = L.marker([lat, lng]).addTo(map);
         }
 
+        //store the location. works for BOTH WAY(share location, select on map)
         function setLocation(lat, lng) {
             document.getElementById('latitude').value = lat;
             document.getElementById('longitude').value = lng;
@@ -532,8 +550,9 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             }
         }
 
+        //Converts coordinates into a human-readable address
         function reverseGeocode(lat, lng) {
-            // Simple reverse geocoding using Nominatim
+           // simple reverse geocoding using Nominatim
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16`)
                 .then(response => response.json())
                 .then(data => {
@@ -552,7 +571,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             document.getElementById('locationStatus').textContent = message;
         }
 
-        // Utility functions
+        //utility functions
         function showAlert(type, message) {
             const alertContainer = document.getElementById('alertContainer');
             const alertDiv = document.createElement('div');
@@ -590,6 +609,33 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
             document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
         }
         </script>
-
-</body>
+        
+        <!-- Footer -->
+        <section class="bg-light text-dark">
+            <div class="container mt-3">
+              <div class="row g-4 justify-content-center">
+                
+                <!-- Follow us centered in full width -->
+                <div class="col-12 text-center mb-5">
+                  <h5 class="category-heading">Follow us</h5>
+                  <div class="d-flex justify-content-center gap-4">
+                    <a href="https://www.facebook.com/NCIRL/" class="fuIcon">
+                      <img src="/images/icons8-facebook-128.png" alt="facebook icon">
+                    </a>
+                    <a href="https://www.instagram.com/ncirl/" class="fuIcon">
+                      <img src="/images/icons8-instagram-160.png" alt="instagram icon">
+                    </a>
+                    <a href="https://x.com/NCIRL" class="fuIcon">
+                      <img src="/images/icons8-twitterx-144.png" alt="twitter icon">
+                    </a>
+                  </div>
+                </div>
+          
+              </div>
+              <div class="col-12 mt-2 pb-2 text-center text-light">
+                &copy; 2025, BookBuddy
+              </div>
+            </div>
+        </section>
+    </body>
 </html>

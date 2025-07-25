@@ -75,7 +75,7 @@ public class UserService {
    
     
     /**
-     * Update user profile: the user’s first and last name
+     * Update user profile: the user's first and last name
      */
     public User updateUser(Long userId, String firstName, String lastName){
         
@@ -129,24 +129,6 @@ public class UserService {
     @Transactional(readOnly = true)//to optimise for read-only queries.
     public boolean emailExists(String email){
         return userRepository.existsByEmail(email.toLowerCase().trim());
-    }
-    
-    /**
-     * Get user count: return the total number of users in the system
-     */
-    @Transactional(readOnly = true)//to optimise for read-only queries.
-    public long getUserCount(){
-        return userRepository.count();
-    }
-    
-    /**
-     * Search users by name:search users whose full name contains the given substring
-     * depend on the custom query method: List<User> findByFullNameContaining(String name)
-     * in UserRepository, probably using Spring Data JPA
-     */
-    @Transactional(readOnly = true)
-    public List<User> searchUsersByName(String name){
-        return userRepository.findByFullNameContaining(name);
     }
     
     /**

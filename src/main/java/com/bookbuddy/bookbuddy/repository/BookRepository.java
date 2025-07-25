@@ -20,47 +20,22 @@ import java.util.List;
 public interface BookRepository extends JpaRepository<Book, Long> {
     
     /**
-     * Find books by owner ID
+     *find books by owner ID
      */
     List<Book> findByOwnerId(Long ownerId);
     
     /**
-     * Find available books by owner ID
+     * find available books by owner ID
      */
     List<Book> findByOwnerIdAndStatus(Long ownerId, Book.BookStatus status);
     
     /**
-     * Find all available books
+     * find all available books
      */
     List<Book> findByStatus(Book.BookStatus status);
     
     /**
-     * Find books by title (case insensitive)
-     */
-    List<Book> findByTitleContainingIgnoreCaseAndStatus(String title, Book.BookStatus status);
-    
-    /**
-     * Find books by author (case insensitive)
-     */
-    List<Book> findByAuthorContainingIgnoreCaseAndStatus(String author, Book.BookStatus status);
-    
-    /**
-     * Find books by genre (case insensitive)
-     */
-    List<Book> findByGenreIgnoreCaseAndStatus(String genre, Book.BookStatus status);
-    
-    /**
-     * Find books by condition
-     */
-    List<Book> findByConditionIgnoreCaseAndStatus(String condition, Book.BookStatus status);
-    
-    /**
-     * Find books by sharing type
-     */
-    List<Book> findBySharingTypeAndStatus(Book.SharingType sharingType, Book.BookStatus status);
-    
-    /**
-     * Search books by title, author, or genre
+     * search books by title, author, or genre
      */
     @Query("SELECT b FROM Book b WHERE b.status = 'AVAILABLE' AND " +
            "(LOWER(b.title) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
@@ -69,8 +44,8 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     List<Book> searchBooks(@Param("query") String query);
     
     /**
-     * Find books within a certain distance (requires latitude/longitude)
-     * This is a basic implementation - for production, consider using PostGIS or similar
+     * find books within a certain distance (requires latitude/longitude)
+     * 
      */
     @Query("SELECT b FROM Book b WHERE " +
            "b.pickupLatitude IS NOT NULL AND b.pickupLongitude IS NOT NULL " +
@@ -83,13 +58,13 @@ public interface BookRepository extends JpaRepository<Book, Long> {
                                      @Param("distance") double distanceKm);
     
     /**
-     * Find books that have location information
+     * find books that have location information
      */
     @Query("SELECT b FROM Book b WHERE b.pickupLatitude IS NOT NULL AND b.pickupLongitude IS NOT NULL AND b.status = 'AVAILABLE'")
     List<Book> findBooksWithLocation();
     
     /**
-     * Find books by multiple criteria
+     * find books by multiple criteria
      */
     @Query("SELECT b FROM Book b WHERE b.status = 'AVAILABLE' " +
            "AND (:title IS NULL OR LOWER(b.title) LIKE LOWER(CONCAT('%', :title, '%'))) " +
@@ -104,52 +79,37 @@ public interface BookRepository extends JpaRepository<Book, Long> {
                                   @Param("sharingType") Book.SharingType sharingType);
     
     /**
-     * Count available books
+     * count available books
      */
     long countByStatus(Book.BookStatus status);
     
     /**
-     * Count books by owner
-     */
-    long countByOwnerId(Long ownerId);
-    
-    /**
-     * Find recent books (last 30 days)
+     * find recent books (last 30 days)
      */
     @Query(value = "SELECT * FROM books WHERE status = 'AVAILABLE' AND created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) ORDER BY created_at DESC", 
        nativeQuery = true)
     List<Book> findRecentBooks();
     
     /**
-     * Find books by ISBN
-     */
-    List<Book> findByIsbnAndStatus(String isbn, Book.BookStatus status);
-    
-    /**
-     * Find books available for give away
+     * find books available for give away
      */
     @Query("SELECT b FROM Book b WHERE b.status = 'AVAILABLE' AND b.sharingType = 'GIVE_AWAY'")
     List<Book> findAvailableGiveAwayBooks();
     
     /**
-     * Find books available for lending
+     * find books available for lending
      */
     @Query("SELECT b FROM Book b WHERE b.status = 'AVAILABLE' AND b.sharingType = 'LEND'")
     List<Book> findAvailableLendBooks();
     
     /**
-     * Find books available for swapping
+     * find books available for swapping
      */
     @Query("SELECT b FROM Book b WHERE b.status = 'AVAILABLE' AND b.sharingType = 'SWAP'")
     List<Book> findAvailableSwapBooks();
     
     /**
-     * Find books by owner and sharing type
-     */
-    List<Book> findByOwnerIdAndSharingType(Long ownerId, Book.SharingType sharingType);
-    
-    /**
-     * Find books that can be swapped (for swap requests)
+     * find books that can be swapped (for swap requests)
      */
     @Query("SELECT b FROM Book b WHERE b.ownerId = :ownerId AND b.status = 'AVAILABLE' AND b.sharingType = 'SWAP'")
     List<Book> findSwappableBooksByOwner(@Param("ownerId") Long ownerId);

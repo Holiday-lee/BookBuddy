@@ -204,19 +204,7 @@ public class RequestController {
         }
     }
     
-    /**
-     * Get request by ID
-     */
-    @GetMapping("/api/{requestId}")
-    @ResponseBody
-    public ResponseEntity<?> getRequest(@PathVariable Long requestId) {
-        Optional<Request> requestOpt = requestService.findById(requestId);
-        if (requestOpt.isPresent()) {
-            return ResponseEntity.ok(requestOpt.get());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
+
     
     /**
      * Get requests by requester
@@ -248,55 +236,13 @@ public class RequestController {
         }
     }
     
-    /**
-     * Get active sent requests
-     */
-    @GetMapping("/api/my-sent/active")
-    @ResponseBody
-    public ResponseEntity<?> getMyActiveSentRequests(HttpSession session) {
-        try {
-            Long userId = getCurrentUserId();
-            List<Request> requests = requestService.findActiveRequestsByRequester(userId);
-            return ResponseEntity.ok(requests);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
-        }
-    }
+
     
-    /**
-     * Get active received requests
-     */
-    @GetMapping("/api/my-received/active")
-    @ResponseBody
-    public ResponseEntity<?> getMyActiveReceivedRequests(HttpSession session) {
-        try {
-            Long userId = getCurrentUserId();
-            List<Request> requests = requestService.findActiveRequestsByOwner(userId);
-            return ResponseEntity.ok(requests);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
-        }
-    }
+
     
-    /**
-     * Get pending requests by book
-     */
-    @GetMapping("/api/book/{bookId}/pending")
-    @ResponseBody
-    public ResponseEntity<?> getPendingRequestsByBook(@PathVariable Long bookId) {
-        List<Request> requests = requestService.findPendingRequestsByBook(bookId);
-        return ResponseEntity.ok(requests);
-    }
+
     
-    /**
-     * Get all requests by book
-     */
-    @GetMapping("/api/book/{bookId}")
-    @ResponseBody
-    public ResponseEntity<?> getRequestsByBook(@PathVariable Long bookId) {
-        List<Request> requests = requestService.findRequestsByBook(bookId);
-        return ResponseEntity.ok(requests);
-    }
+
     
     /**
      * Get notification count for received requests (pending requests)

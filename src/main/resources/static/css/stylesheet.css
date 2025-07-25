@@ -30,6 +30,21 @@ body {
     padding: 15px;
 }
 
+.card-body {
+    padding: 15px;
+}
+
+.card-title {
+    color: #333;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.card-text {
+    color: #666;
+    line-height: 1.4;
+}
+
 /* Simple forms */
 .form-control {
     border: 1px solid #ccc;
@@ -165,15 +180,88 @@ body {
     background-color: #dc3545;
 }
 
+/* Homepage specific styles */
+.banner-container {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.banner-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.banner-link {
+    display: block;
+    text-decoration: none;
+    width: 100%;
+}
+
+section {
+    padding: 20px 0;
+}
+
+.bg-light {
+    background-color: #f8f8f8;
+}
+
+.category-heading {
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.fuIcon {
+    display: inline-block;
+    margin: 0 10px;
+}
+
+.fuIcon img {
+    width: 40px;
+    height: 40px;
+}
+
+/* Login specific styles */
+.login-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 30px;
+    border: 1px solid #ddd;
+    background-color: white;
+}
+
+.logo-section {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.logo-section img {
+    max-height: 70px;
+    margin-bottom: 15px;
+}
+
+.additional-links {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.back-home {
+    text-align: center;
+    margin-top: 15px;
+}
+
 /* Simple responsive */
 @media (max-width: 768px) {
-    .container {
-        padding: 10px;
+    /* Custom mobile adjustments that Bootstrap doesn't handle */
+    .btn {
+        margin-bottom: 5px;
     }
     
-    .btn {
-        width: 100%;
-        margin-bottom: 5px;
+    /* Custom mobile adjustments for specific components */
+    .fuIcon img {
+        width: 35px;
+        height: 35px;
     }
 }
 
@@ -200,4 +288,15 @@ body {
 
 .d-block {
     display: block;
+}
+
+/* Simple flash messages */
+#flash-messages {
+    margin-bottom: 15px;
+}
+
+/* Simple auth buttons */
+.auth-buttons {
+    display: flex;
+    align-items: center;
 } 

@@ -37,7 +37,7 @@ public class SecurityConfig{
                 
                 // Authentication endpoints - public access
                 .requestMatchers("/register", "/login", "/logout").permitAll()
-                .requestMatchers("/api/check-email", "/api/current-user", "/api/debug-session").permitAll()
+                .requestMatchers("/api/check-email", "/api/current-user").permitAll()
                 
                 // Static resources - allow all
                 .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**", "/fonts/**", "/favicon.ico").permitAll()
@@ -45,7 +45,7 @@ public class SecurityConfig{
                 // Public search functionality 
                 .requestMatchers("/pages/search-books.html", "/pages/user-profile.html").permitAll()
                 .requestMatchers("/search/**", "/api/books/search/**", "/api/books/nearby").permitAll()
-                .requestMatchers("/books/api/all", "/books/api/search", "/books/api/nearby", "/books/api/give-away", "/books/api/lend", "/books/api/swap", "/books/api/user/**").permitAll()
+                .requestMatchers("/books/api/search", "/books/api/user/**").permitAll()
                 
                 // Protected pages - require authentication
                 .requestMatchers("/pages/dashboard.html", "/pages/list-book.html", 

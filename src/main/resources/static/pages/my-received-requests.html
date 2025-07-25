@@ -72,7 +72,7 @@
                 <div class="col-md-10">
                     <div class="card">
                         <div class="card-header bg-success text-white">
-                            <h4 class="mb-0">📥 My Received Requests</h4>
+                            <h4 class="mb-0">My Received Requests</h4>
                             <small>Review and respond to requests for your books</small>
                         </div>
                         <div class="card-body">
@@ -168,7 +168,7 @@
                 // Book information
                 const bookInfo = request.bookTitle ? 
                     `<div class="alert alert-info mb-2">
-                        <h6 class="mb-1">📚 ${request.bookTitle}</h6>
+                        <h6 class="mb-1"><strong>Book Title:</strong>${request.bookTitle}</h6>
                         <p class="mb-1"><strong>Author:</strong> ${request.bookAuthor || 'Unknown'}</p>
                         ${request.bookCondition ? `<p class="mb-1"><strong>Condition:</strong> ${request.bookCondition}</p>` : ''}
                         ${request.bookGenre ? `<p class="mb-1"><strong>Genre:</strong> ${request.bookGenre}</p>` : ''}
@@ -328,5 +328,33 @@
             window.location.href = `/pages/chat.html?requestId=${requestId}`;
         }
         </script>
+        
+        <!-- Footer -->
+        <section class="bg-light text-dark">
+            <div class="container mt-3">
+              <div class="row g-4 justify-content-center">
+                
+                <!-- Follow us centered in full width -->
+                <div class="col-12 text-center mb-5">
+                  <h5 class="category-heading">Follow us</h5>
+                  <div class="d-flex justify-content-center gap-4">
+                    <a href="https://www.facebook.com/NCIRL/" class="fuIcon">
+                      <img src="/images/icons8-facebook-128.png" alt="facebook icon">
+                    </a>
+                    <a href="https://www.instagram.com/ncirl/" class="fuIcon">
+                      <img src="/images/icons8-instagram-160.png" alt="instagram icon">
+                    </a>
+                    <a href="https://x.com/NCIRL" class="fuIcon">
+                      <img src="/images/icons8-twitterx-144.png" alt="twitter icon">
+                    </a>
+                  </div>
+                </div>
+          
+              </div>
+              <div class="col-12 mt-2 pb-2 text-center text-light">
+                &copy; 2025, BookBuddy
+              </div>
+            </div>
+        </section>
     </body>
 </html> 
