@@ -207,8 +207,18 @@ public class BookController {
         List<Book> books;
         
         // If location parameters are provided, do location-based search
-        if (latitude != null && longitude != null && radius != null) {
-            List<Book> nearbyBooks = bookService.findBooksNearby(latitude, longitude, radius);
+        if (latitude != null && longitude != null) {
+            List<Book> nearbyBooks;
+            
+            // If radius is provided, do radius-based search
+            if (radius != null) {
+                nearbyBooks = bookService.findBooksNearby(latitude, longitude, radius);
+            } else {
+                // If no radius provided, get all books with location (for "all locations" option)
+                nearbyBooks = bookService.findAllAvailableBooks().stream()
+                    .filter(book -> book.hasLocation())
+                    .collect(Collectors.toList());
+            }
             
             // If there's also a text query, filter the nearby books
             if (query != null && !query.trim().isEmpty()) {

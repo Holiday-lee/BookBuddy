@@ -44,11 +44,6 @@
             padding: 15px;
             border-bottom: 1px solid #e9ecef;
             cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        
-        .chat-item:hover {
-            background-color: #e9ecef;
         }
         
         .chat-item.active {
@@ -481,7 +476,8 @@
                     if (!data) return; // Already handled redirect
                     
                     console.log('Chats data received:', data);
-                    chats = data;
+                    // Filter out completed chats to keep interface clean
+                    chats = data.filter(chat => chat.status !== 'COMPLETED');
                     displayChatList();
                 })
                 .catch(error => {

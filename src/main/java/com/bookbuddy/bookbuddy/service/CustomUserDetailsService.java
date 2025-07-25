@@ -19,12 +19,12 @@ import java.util.ArrayList;
  * Custom UserDetailsService to integrate our User entity with Spring Security
  */
 @Service
-public class CustomUserDetailsService implements UserDetailsService {
+public class CustomUserDetailsService implements UserDetailsService{
 
     private final UserRepository userRepository;
 
     @Autowired
-    public CustomUserDetailsService(UserRepository userRepository) {
+    public CustomUserDetailsService(UserRepository userRepository){
         this.userRepository = userRepository;
     }
 

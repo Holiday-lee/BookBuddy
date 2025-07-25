@@ -34,7 +34,7 @@ public class AuthController {
     }
     
     /**
-     * Handle user registration
+     * handle user registration
      */
     @PostMapping("/register")
     public String registerUser(@RequestParam("firstName") String firstName, 
@@ -42,10 +42,11 @@ public class AuthController {
                              @RequestParam("email") String email,
                              @RequestParam("password") String password,
                              RedirectAttributes redirectAttributes) {
+        // RedirectAttributes is used to send data(like messages) across a redirect,so tht flash msg(success/error)can be shown on the next page
         
         try {
-            userService.registerUser(firstName, lastName, email, password);
-            redirectAttributes.addFlashAttribute("successMessage", 
+            userService.registerUser(firstName, lastName, email, password); //call service layer to handle the registration logic
+            redirectAttributes.addFlashAttribute("successMessage", //FlashAttribute:showing messages once after a redirect
                 "Registration successful! Please log in.");
             return "redirect:/pages/login.html";
             
@@ -62,29 +63,34 @@ public class AuthController {
      * Check if email exists (for AJAX validation)
      */
     @GetMapping("/api/check-email")
-    @ResponseBody
-    public boolean checkEmailExists(@RequestParam("email") String email) {
+    @ResponseBody //tell spring tht I want Json as return not rendering a html page
+    public boolean checkEmailExists(@RequestParam("email") String email){
         return userService.emailExists(email);
     }
     
     /**
-     * Get current user info for frontend (works with Spring Security)
+     * Get current user info for frontend(works wit Spring Security)
      */
-    @GetMapping("/api/current-user")
-    @ResponseBody
-    public Map<String, Object> getCurrentUser(HttpSession session) {
+     @GetMapping("/api/current-user")//when someone sends a GET request to /api/current-user, call this method
+    @ResponseBody //tell spring tht I want Json as return not rendering a html page
+    public Map<String, Object> getCurrentUser(HttpSession session){ //HttpSession session:gives u access to the current user's session
         Map<String, Object> response = new HashMap<>();
         
+        //get the current authentication object from Spring Security=>it's how Spring knows who is logged in.
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
+        //there is an authentication object//user is authenticated & not anonymous 
         if (authentication != null && authentication.isAuthenticated() 
-            && !"anonymousUser".equals(authentication.getPrincipal())) {
+            && !"anonymousUser".equals(authentication.getPrincipal())){
             
-            String email = authentication.getName(); // Spring Security stores username (email)
+            //In Spring Security, the "name" is often the username or email,depending on how login is set up.
+            String email = authentication.getName(); //get the current user's email
+            //search for a user in database by email. get back an Opt<User> in case the user isn't found
             Optional<User> userOpt = userService.findByEmail(email);
             
-            if (userOpt.isPresent()) {
+            if (userOpt.isPresent()){ 
                 User user = userOpt.get();
+                //fill the response with the user's data
                 response.put("authenticated", true);
                 response.put("id", user.getId());
                 response.put("email", user.getEmail());
@@ -92,16 +98,16 @@ public class AuthController {
                 response.put("lastName", user.getLastName());
                 response.put("userId", user.getId());
                 response.put("createdAt", user.getCreatedAt());
-            } else {
+            } else { //is user nt found(maybe data is corrupted or s1 deleted the user after login in)
                 response.put("authenticated", false);
                 response.put("message", "User not found");
             }
-        } else {
+        } else { //if no1 is log in(the user is anonymous)
             response.put("authenticated", false);
             response.put("message", "Not logged in");
         }
         
-        return response;
+        return response;//send the map back as a JSON object to front end
     }
 
     /**
@@ -111,7 +117,7 @@ public class AuthController {
     @ResponseBody
     public ResponseEntity<?> updateProfile(@RequestParam("firstName") String firstName,
                                          @RequestParam("lastName") String lastName,
-                                         HttpSession session) {
+                                         HttpSession session){
         
         try {
             // Get current user from Spring Security authentication
@@ -120,7 +126,7 @@ public class AuthController {
                 "anonymousUser".equals(authentication.getPrincipal())) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
-                response.put("message", "Please log in to update your profile.");
+                response.put("message", "Please log in to update your profile");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
             
@@ -141,14 +147,14 @@ public class AuthController {
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "Profile updated successfully!");
+            response.put("message", "Your profile has been updated successfully!");
             response.put("firstName", updatedUser.getFirstName());
             response.put("lastName", updatedUser.getLastName());
             response.put("email", updatedUser.getEmail());
             
             return ResponseEntity.ok(response);
             
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e){
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", e.getMessage());

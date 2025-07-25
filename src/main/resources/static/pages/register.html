@@ -17,7 +17,6 @@
         
         <!-- Add CSS sheet -->
         <link rel="stylesheet" href="/css/stylesheet.css">
-        <link rel="stylesheet" href="/css/index.css">
     </head>
     
     <body>
@@ -26,13 +25,13 @@
                 <div class="col-md-6">
                     <h2>Sign Up for BookBuddy</h2>
                     
-                    <!-- Success Message (from redirectAttributes) -->
+                    <!-- Register Success Message (from redirectAttributes) -->
                     <div id="successMessage" class="alert alert-success alert-dismissible fade show" style="display: none;">
                         <span id="successText"></span>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                     
-                    <!-- Error Message (from redirectAttributes) -->
+                    <!-- Register Error Message (from redirectAttributes) -->
                     <div id="errorMessage" class="alert alert-danger alert-dismissible fade show" style="display: none;">
                         <span id="errorText"></span>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -44,10 +43,12 @@
                             <label for="firstName" class="form-label">First Name</label>
                             <input type="text" class="form-control" id="firstName" name="firstName" required maxlength="50">
                         </div>
+                        
                         <div class="mb-3">
                             <label for="lastName" class="form-label">Last Name</label>
                             <input type="text" class="form-control" id="lastName" name="lastName" required maxlength="50">
                         </div>
+                        
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
                             <input type="email" class="form-control" id="email" name="email" required maxlength="100">
@@ -55,14 +56,16 @@
                                 This email is already registered.
                             </div>
                         </div>
+                        
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
                             <input type="password" class="form-control" id="password" name="password" required minlength="6">
                             <div class="form-text">Password must be at least 6 characters long.</div>
                         </div>
+                        
                         <div class="mb-3">
                             <label for="confirmPassword" class="form-label">Confirm Password</label>
-                            <input type="password" class="form-control" id="confirmPassword" required>
+                            <input type="password" class="form-control" id="confirmPassword">
                             <div id="passwordMismatch" class="text-danger" style="display: none;">
                                 Passwords do not match.
                             </div>
@@ -72,6 +75,7 @@
                         <a href="/pages/login.html" class="btn btn-link">Already have an account? Login</a>
                     </form>
                     
+                    
                 </div>
             </div>
         </div>
@@ -80,12 +84,12 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
         
         <script>
-            // Check for flash messages from URL parameters (if using redirectAttributes)
+            // Check for flash messages from URL parameters (using redirectAttributes)
             // window.location.search is a query to check where is the current page's URL (after?)
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('success')) {
-                document.getElementById('successText').textContent = decodeURIComponent(urlParams.get('success'));
-                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('successText').textContent = decodeURIComponent(urlParams.get('success')); // show it on successText
+                document.getElementById('successMessage').style.display = 'block';// make successMessage div visible
             }
             if (urlParams.get('error')) {
                 document.getElementById('errorText').textContent = decodeURIComponent(urlParams.get('error'));
@@ -93,53 +97,48 @@
             }
             
             // Email validation
-            document.getElementById('email').addEventListener('blur', function() {
-                const email = this.value;
-                if (email) {
+            document.getElementById('email').addEventListener('blur', function() { // when clicks "blur"=the user done enter the email and left, then the function runs
+                const email = this.value;//this refers to the email input box; .value=gets whatever the user typed
+                if (email) { // if (email !== '') {
                     
-                    // ?email=${encodeURIComponent(email)}=> reates a query parameter/ encodeURIComponent() / ${email} = insert value of email
+                    //fetch() is making a GET request to a URL, ?email=... is a query string
+                    // ${encodeURIComponent(email)} puts the typed email into the query string safely.
                     fetch(`/api/check-email?email=${encodeURIComponent(email)}`)
-                        .then(response => response.json())
-                        .then(exists => {
-                            const message = document.getElementById('emailExistsMessage');
+                        .then(response => response.json()) // wait for the server to reply & the reply to json(JavaScript object)
+                        .then(exists => { //holds the value returned from the server (after .json()//exists is a variable(true/false), it can be named anything: emailExists....
+                            const message = document.getElementById('emailExistsMessage'); // point a message as reference to the whole div of emailExistsMessage
                             if (exists) {
                                 message.style.display = 'block';
-                                this.setCustomValidity('Email already exists');
+                                // Store email exists state for form validation
+                                this.dataset.emailExists = 'true';
                             } else {
-                                message.style.display = 'none';
-                                this.setCustomValidity('');
+                                message.style.display = 'none'; // hide the warning
+                                // Clear email exists state
+                                delete this.dataset.emailExists;
                             }
                         })
                         .catch(error => console.error('Error checking email:', error));
                 }
             });
             
-            // Password confirmation
-            function validatePasswords() {
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
-                const mismatchMessage = document.getElementById('passwordMismatch');
-                
-                if (confirmPassword && password !== confirmPassword) {
-                    mismatchMessage.style.display = 'block';
-                    document.getElementById('confirmPassword').setCustomValidity('Passwords do not match');
-                } else {
-                    mismatchMessage.style.display = 'none';
-                    document.getElementById('confirmPassword').setCustomValidity('');
-                }
-            }
-            
-            document.getElementById('password').addEventListener('input', validatePasswords);
-            document.getElementById('confirmPassword').addEventListener('input', validatePasswords);
             
             // Form submission validation
-            document.getElementById('registrationForm').addEventListener('submit', function(e) {
+            document.getElementById('registrationForm').addEventListener('submit', function(e) { // e=event object, here is the Submit
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
+                const emailInput = document.getElementById('email');
                 
+                // Check if email already exists
+                if (emailInput.dataset.emailExists === 'true') {
+                    e.preventDefault(); // stop the default action:form submitting
+                    return; // exit the function early
+                }
+                
+                // Check password mismatch,only show message if not already visible
                 if (password !== confirmPassword) {
                     e.preventDefault();
-                    document.getElementById('passwordMismatch').style.display = 'block';
+                    document.getElementById('passwordMismatch').style.display = 'block'; // show error msg
+                    return;
                 }
             });
         </script>

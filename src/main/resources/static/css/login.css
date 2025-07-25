@@ -3,62 +3,77 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to c
 Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to edit this template
 */
 /* 
-    Created on : Jul 9, 2025, 4:06:44 PM
+    Created on : Jul 9, 2025, 4:06:44 PM
     Author     : holiday
 */
 
 .login-container {
-                max-width: 450px;
-                margin: 50px auto;
-                padding: 40px;
-                border-radius: 15px;
-                box-shadow: 0 0 25px rgba(0, 0, 0, 0.1);
-                background-color: #fff;
-            }
-            
-            .logo-section {
-                text-align: center;
-                margin-bottom: 30px;
-            }
-            
-            .logo-section img {
-                max-height: 80px;
-                margin-bottom: 15px;
-            }
-            
-            .form-control:focus {
-                border-color: #007bff;
-                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-            }
-            
-            .btn-primary {
-                background-color: #007bff;
-                border-color: #007bff;
-                padding: 12px;
-                font-weight: 500;
-            }
-            
-            .btn-primary:hover {
-                background-color: #0056b3;
-                border-color: #0056b3;
-            }
-            
-            .additional-links {
-                text-align: center;
-                margin-top: 20px;
-            }
-            
-            .back-home {
-                text-align: center;
-                margin-top: 15px;
-            }
-            
-            .form-control {
-                padding: 12px;
-                font-size: 16px;
-            }
-            
-            .alert {
-                border-radius: 10px;
-            }
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 30px;
+    border: 1px solid #ddd;
+    background-color: white;
+}
+
+.logo-section {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.logo-section img {
+    max-height: 70px;
+    margin-bottom: 15px;
+}
+
+.form-control {
+    border: 1px solid #ccc;
+    padding: 10px;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border: 1px solid #007bff;
+    color: white;
+    padding: 10px 20px;
+    width: 100%;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.additional-links {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.back-home {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.alert {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 15px;
+    background-color: white;
+}
+
+.alert-success {
+    border-color: #28a745;
+    background-color: #d4edda;
+}
+
+.alert-danger {
+    border-color: #dc3545;
+    background-color: #f8d7da;
+}
 

@@ -21,15 +21,17 @@ import java.util.List;
 @Repository
 // JpaRepository<User, Long> :it inherits built-in CRUD operations like save(), findById(), delete(), 
 // and more — all for User entities, using Long as the ID type.
-public interface UserRepository extends JpaRepository<User, Long> { 
+public interface UserRepository extends JpaRepository<User, Long> { //Long=type of the user's ID
     
     /**
      * find & return a user by email address
+     * auto generate SELECT * FROM users WHERE email = ?
      */
     Optional<User> findByEmail(String email); //returns Optional<User> to handle nulls safely
     
     /**
      * Check if user exists by email
+     * SELECT COUNT(*) > 0 FROM users WHERE email = ?
      */
     boolean existsByEmail(String email);
 
@@ -42,6 +44,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * For example: searching "john doe" will match users with full names like "John Doe" or "john DOe"
      */
     @Query("SELECT u FROM User u WHERE " +
+            //CONCAT(u.firstName, ' ', u.lastName) => joins first and last name
            "LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<User> findByFullNameContaining(@Param("name") String name);
     
