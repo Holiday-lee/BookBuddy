@@ -28,16 +28,16 @@ public class UserService {
     }
     
     /**
-     * REgister a new user
+     * Register a new user
      */
     public User registerUser(String firstName, String lastName, String email, String password){
+        // Validate input first
+        validateUserInput(firstName, lastName, email, password);
+        
         // Check if user already exists by checking the email is taken
-        if (userRepository.existsByEmail(email)){
+        if (userRepository.existsByEmail(email.toLowerCase().trim())){
             throw new IllegalArgumentException("Email already exists: " + email);
         }
-        
-        // Validate input
-        validateUserInput(firstName, lastName, email, password);
         
         // Create new user
         User user = new User();
@@ -125,6 +125,7 @@ public class UserService {
     
     /**
      * check if email exists(use in the AJAX call in the controller)
+     * Note: This method is no longer used as we moved to server-side only validation
      */
     @Transactional(readOnly = true)//to optimise for read-only queries.
     public boolean emailExists(String email){

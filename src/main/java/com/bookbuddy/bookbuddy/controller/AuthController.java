@@ -61,6 +61,7 @@ public class AuthController {
     
     /**
      * Check if email exists (for AJAX validation)
+     * Note: This endpoint is no longer used as we moved to server-side only validation
      */
     @GetMapping("/api/check-email")
     @ResponseBody //tell spring tht I want Json as return not rendering a html page

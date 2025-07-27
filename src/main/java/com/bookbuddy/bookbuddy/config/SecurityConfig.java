@@ -56,7 +56,7 @@ public class SecurityConfig{
                 
                 // Protected API endpoints
                 .requestMatchers("/api/books/create", "/api/books/update/**", "/api/books/delete/**", "/books/api/*/delete").authenticated()
-                .requestMatchers("/books/list", "/books/api/my-books", "/books/api/*/availability", "/books/api/*", "/books/api/*/delete", "/books/api/swappable").authenticated()
+                .requestMatchers("/books/list", "/books/api/list", "/books/api/my-books", "/books/api/*/availability", "/books/api/*", "/books/api/*/delete", "/books/api/swappable").authenticated()
                 .requestMatchers("/api/requests/**", "/api/chat/**", "/api/profile/**", "/api/user/**").authenticated()
                 .requestMatchers("/requests/api/**").authenticated()
                 .requestMatchers("/ws/**").authenticated()

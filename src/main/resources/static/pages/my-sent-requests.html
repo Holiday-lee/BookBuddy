@@ -168,7 +168,7 @@
                 // Book information
                 const bookInfo = request.bookTitle ? 
                     `<div class="alert alert-info mb-2">
-                        <h6 class="mb-1">📚 ${request.bookTitle}</h6>
+                        <h6 class="mb-1">Book Title: ${request.bookTitle}</h6>
                         <p class="mb-1"><strong>Author:</strong> ${request.bookAuthor || 'Unknown'}</p>
                         ${request.bookCondition ? `<p class="mb-1"><strong>Condition:</strong> ${request.bookCondition}</p>` : ''}
                         ${request.bookGenre ? `<p class="mb-1"><strong>Genre:</strong> ${request.bookGenre}</p>` : ''}

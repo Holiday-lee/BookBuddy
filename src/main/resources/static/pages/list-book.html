@@ -123,7 +123,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                                 
                                 <!--BOOK CONDITION-->
                                 <div class="mb-3">
-                                    <label for="condition" class="form-label">Condition</label>
+                                    <label for="condition" class="form-label">Condition *</label>
                                     <select class="form-select" id="condition" name="condition" required>
                                         <option value="">Select condition</option>
                                         <option value="New">New</option>
@@ -144,7 +144,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                                 
                                 <!--sharing type section-->
                                 <div class="mb-4">
-                                    <h6 class="fw-bold text-primary">Sharing Type</h6>
+                                    <h6 class="fw-bold text-dark">Sharing Type</h6>
                                     
                                     <div class="mb-3">
                                         <label for="sharingType" class="form-label">How would you like to share this book? *</label>
@@ -171,7 +171,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                                 
                                 <!--location section-->
                                 <div class="mb-4">
-                                    <h6 class="fw-bold text-primary" >📍 Pickup Location *</h6>
+                                    <h6 class="fw-bold text-dark" >📍 Pickup Location *</h6>
                                     
                                     <!--location selection buttons-->
                                     <div class="mb-3">
@@ -312,6 +312,9 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this temp
                     submitBtn.disabled = false;
                     return;
                 }
+                
+                // Call submitForm function
+                submitForm();
                 
                 function submitForm(){
                     // prepare form data as URL-encoded string

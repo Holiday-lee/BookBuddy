@@ -198,17 +198,36 @@
             
             books.forEach(book => {
                 const isAvailable = book.status === 'AVAILABLE';
-                const statusBadge = isAvailable ? 
-                    '<span class="badge bg-success">Available</span>' : 
-                    '<span class="badge bg-secondary">' + book.status + '</span>';
+                const isLentOut = book.status === 'LENT_OUT';
+                const isSwapped = book.status === 'SWAPPED';
+                const isGivenAway = book.status === 'GIVEN_AWAY';
                 
-                const statusButton = isAvailable ?
-                    `<button class="btn btn-outline-warning btn-sm" onclick="toggleAvailability(${book.id}, false)">
+                // Status badge with appropriate colors
+                let statusBadge;
+                if (isAvailable) {
+                    statusBadge = '<span class="badge bg-success">Available</span>';
+                } else if (isLentOut) {
+                    statusBadge = '<span class="badge bg-warning">Lent Out</span>';
+                } else if (isSwapped) {
+                    statusBadge = '<span class="badge bg-info">Swapped</span>';
+                } else if (isGivenAway) {
+                    statusBadge = '<span class="badge bg-secondary">Given Away</span>';
+                } else {
+                    statusBadge = '<span class="badge bg-secondary">' + book.status + '</span>';
+                }
+                
+                // Status button - only show for available and lent out books
+                let statusButton = '';
+                if (isAvailable) {
+                    statusButton = `<button class="btn btn-outline-warning btn-sm" onclick="toggleAvailability(${book.id}, false)">
                         🔒 Make Unavailable
-                    </button>` :
-                    `<button class="btn btn-outline-success btn-sm" onclick="toggleAvailability(${book.id}, true)">
+                    </button>`;
+                } else if (isLentOut) {
+                    statusButton = `<button class="btn btn-outline-success btn-sm" onclick="toggleAvailability(${book.id}, true)">
                         🔓 Make Available
                     </button>`;
+                }
+                // No button for swapped or given away books
                 
                 html += `
                     <div class="col-md-6 col-lg-4">
@@ -227,6 +246,8 @@
                                 ${book.displayLocation ? `<p class="card-text"><small class="text-muted">📍 ${book.displayLocation}</small></p>` : ''}
                                 ${book.description ? `<p class="card-text">${book.description}</p>` : ''}
                                 <p class="card-text"><small class="text-muted">Listed: ${formatDate(book.createdAt)}</small></p>
+                                ${isSwapped ? '<p class="card-text"><small class="text-info">✅ This book has been successfully swapped and cannot be made available again.</small></p>' : ''}
+                                ${isGivenAway ? '<p class="card-text"><small class="text-info">✅ This book has been given away and cannot be made available again.</small></p>' : ''}
                             </div>
                             <div class="card-footer">
                                 <div class="d-flex gap-2">

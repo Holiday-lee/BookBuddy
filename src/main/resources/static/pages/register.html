@@ -96,45 +96,16 @@
                 document.getElementById('errorMessage').style.display = 'block';
             }
             
-            // Email validation
-            document.getElementById('email').addEventListener('blur', function() { // when clicks "blur"=the user done enter the email and left, then the function runs
-                const email = this.value;//this refers to the email input box; .value=gets whatever the user typed
-                if (email) { // if (email !== '') {
-                    
-                    //fetch() is making a GET request to a URL, ?email=... is a query string
-                    // ${encodeURIComponent(email)} puts the typed email into the query string safely.
-                    fetch(`/api/check-email?email=${encodeURIComponent(email)}`)
-                        .then(response => response.json()) // wait for the server to reply & the reply to json(JavaScript object)
-                        .then(exists => { //holds the value returned from the server (after .json()//exists is a variable(true/false), it can be named anything: emailExists....
-                            const message = document.getElementById('emailExistsMessage'); // point a message as reference to the whole div of emailExistsMessage
-                            if (exists) {
-                                message.style.display = 'block';
-                                // Store email exists state for form validation
-                                this.dataset.emailExists = 'true';
-                            } else {
-                                message.style.display = 'none'; // hide the warning
-                                // Clear email exists state
-                                delete this.dataset.emailExists;
-                            }
-                        })
-                        .catch(error => console.error('Error checking email:', error));
-                }
-            });
+            // Note: Email validation is now handled server-side only for better security
+            // Real-time validation removed to avoid duplicate database calls
             
             
             // Form submission validation
             document.getElementById('registrationForm').addEventListener('submit', function(e) { // e=event object, here is the Submit
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
-                const emailInput = document.getElementById('email');
                 
-                // Check if email already exists
-                if (emailInput.dataset.emailExists === 'true') {
-                    e.preventDefault(); // stop the default action:form submitting
-                    return; // exit the function early
-                }
-                
-                // Check password mismatch,only show message if not already visible
+                // Check password mismatch
                 if (password !== confirmPassword) {
                     e.preventDefault();
                     document.getElementById('passwordMismatch').style.display = 'block'; // show error msg

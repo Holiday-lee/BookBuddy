@@ -16,21 +16,22 @@ import java.util.ArrayList;
 /**
  *
  * @author holiday
- * Custom UserDetailsService to integrate our User entity with Spring Security
+ * this classs is a helper tht Spring Security uses to load a user from database by email when s1 logs in
+ * like when s1 tries to login, check the database for their email.If found,give Spring Security their details so it can check the password.
  */
 @Service
 public class CustomUserDetailsService implements UserDetailsService{
 
     private final UserRepository userRepository;
 
-    @Autowired
+    @Autowired//ask Spring to inject an instance of UserRepository
     public CustomUserDetailsService(UserRepository userRepository){
-        this.userRepository = userRepository;
+        this.userRepository = userRepository;//we need a userRepository to b injected here so it can fetch user data from the database
     }
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {//Spring Securty sends email(s1 wants to login)
+        User user = userRepository.findByEmail(email)//checks with database for that email
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
         return org.springframework.security.core.userdetails.User.builder()
