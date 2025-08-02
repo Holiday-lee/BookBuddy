@@ -106,6 +106,55 @@
             </div>
         </div>
         
+        <!-- Request Modal -->
+        <div class="modal fade" id="requestModal" tabindex="-1" aria-labelledby="requestModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="requestModalLabel">Request Book</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="bookInfo" class="mb-3">
+                            <!-- Book information will be populated here -->
+                        </div>
+                        <form id="requestForm">
+                            <div class="mb-3">
+                                <label for="requestMessage" class="form-label">Message (Optional)</label>
+                                <textarea class="form-control" id="requestMessage" rows="3" 
+                                          placeholder="Tell the owner why you're interested in this book..."></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-success" id="sendRequestBtn">Send Request</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Book Selection Modal for Swap -->
+        <div class="modal fade" id="bookSelectionModal" tabindex="-1" aria-labelledby="bookSelectionModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="bookSelectionModalLabel">Select a Book to Offer</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted mb-3">Choose a book from your collection to offer in exchange:</p>
+                        <div id="bookSelectionList" class="row g-3">
+                            <!-- Books will be populated here -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Bootstrap -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
         
@@ -113,11 +162,31 @@
         let currentUserId = null;
         let currentBookSharingType = null;
         let currentBookData = null;
+        let requestModal = null;
+        let bookSelectionModal = null;
+        let selectedBookForSwap = null;
+        let swapMessage = '';
+        let swapSendBtn = null;
+        let swapOriginalText = '';
         
         document.addEventListener('DOMContentLoaded', function(){
             checkAuthentication();
             loadUserProfile();
+            setupRequestModal();
+            setupBookSelectionModal();
         });
+        
+        function setupRequestModal() {
+            requestModal = new bootstrap.Modal(document.getElementById('requestModal'));
+            
+            document.getElementById('sendRequestBtn').addEventListener('click', function() {
+                sendRequest();
+            });
+        }
+        
+        function setupBookSelectionModal() {
+            bookSelectionModal = new bootstrap.Modal(document.getElementById('bookSelectionModal'));
+        }
         
         function checkAuthentication(){
             console.log('Checking authentication...');
@@ -225,7 +294,7 @@
                 
                 html += `
                     <div class="col-md-6 col-lg-4">
-                        <div class="card h-100" data-book='${JSON.stringify(book)}'>
+                        <div class="card h-100" data-book-id="${book.id}" data-book-sharing-type="${book.sharingType || ''}" data-book-lending-duration="${book.lendingDurationDays || ''}">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h5 class="card-title mb-0">${book.title}</h5>
@@ -240,7 +309,7 @@
                                 ${book.description ? `<p class="card-text">${book.description}</p>` : ''}
                             </div>
                             <div class="card-footer">
-                                <button class="btn btn-primary btn-sm" onclick="requestBook(${book.id}, event)" ${book.status !== 'AVAILABLE' ? 'disabled' : ''}>
+                                <button class="btn btn-success btn-sm" onclick="requestBook(${book.id}, event)" ${book.status !== 'AVAILABLE' ? 'disabled' : ''}>
                                     📖 Request Book
                                 </button>
                             </div>
@@ -256,6 +325,63 @@
         function requestBook(bookId, event) {
             console.log('Request book called for bookId:', bookId);
             
+            // Skip authentication check for now and proceed directly
+            console.log('Skipping authentication check, proceeding with request...');
+            
+            // Find the book data from the current search results
+            const bookCard = event ? event.target.closest('.card') : document.querySelector(`[onclick*="requestBook(${bookId})"]`).closest('.card');
+            
+            // Extract data from data attributes
+            const bookData = {
+                id: bookCard.dataset.bookId,
+                sharingType: bookCard.dataset.bookSharingType,
+                lendingDurationDays: bookCard.dataset.bookLendingDuration
+            };
+
+            const bookTitle = bookCard.querySelector('.card-title').textContent;
+            const bookAuthor = bookCard.querySelector('.card-subtitle').textContent;
+            
+            // Get condition - look for the small element that contains "Condition:"
+            const conditionElement = Array.from(bookCard.querySelectorAll('small')).find(el => el.textContent.includes('Condition:'));
+            const bookCondition = conditionElement ? conditionElement.textContent.replace('Condition: ', '') : 'Unknown';
+            
+            // Get genre - look for the small element that contains "Genre:"
+            const genreElement = Array.from(bookCard.querySelectorAll('small')).find(el => el.textContent.includes('Genre:'));
+            const bookGenre = genreElement ? genreElement.textContent.replace('Genre: ', '') : '';
+            
+            // Get sharing type from the stored book data
+            const bookSharingType = bookData.sharingType || 'Unknown';
+            
+            // Create display text for sharing type
+            const sharingTypeDisplay = bookSharingType.replace('_', ' ');
+            
+            // Store the sharing type for later use
+            currentBookSharingType = bookSharingType;
+            currentBookData = bookData;
+            
+            // Populate the modal with book details
+            document.getElementById('requestModalLabel').innerText = `Request Book`;
+            document.getElementById('bookInfo').innerHTML = `
+                <p><strong>Title:</strong> ${bookTitle}</p>
+                <p><strong>Author:</strong> ${bookAuthor}</p>
+                <p><strong>Condition:</strong> ${bookCondition}</p>
+                <p><strong>Genre:</strong> ${bookGenre}</p>
+                <p><strong>📚 Sharing Type:</strong> ${sharingTypeDisplay}</p>
+                ${bookData.lendingDurationDays ? `<p><strong>⏱️ Max Duration:</strong> ${bookData.lendingDurationDays} days</p>` : ''}
+                ${bookCard.querySelector('.card-text').textContent.includes('📍') ? `<p><strong>📍 Location:</strong> ${bookCard.querySelector('.card-text').textContent.replace('📍', '').trim()}</p>` : ''}
+                ${bookCard.querySelector('.card-text').textContent.includes('Description:') ? `<p><strong>Description:</strong> ${bookCard.querySelector('.card-text').textContent.replace('Description: ', '').trim()}</p>` : ''}
+            `;
+
+            // Show the modal
+            requestModal.show();
+        }
+        
+        function sendRequest() {
+            const message = document.getElementById('requestMessage').value;
+            const bookId = currentBookData.id;
+            const bookSharingType = currentBookData.sharingType;
+            const bookLendingDuration = currentBookData.lendingDurationDays;
+
             // Check if user is authenticated
             fetch('/api/current-user', { credentials: 'include' })
                 .then(response => {
@@ -273,34 +399,7 @@
                     }
                     
                     console.log('User is authenticated, proceeding with request');
-                    
-                    // Find the book data from the current search results
-                    const bookCard = event ? event.target.closest('.card') : document.querySelector(`[onclick*="requestBook(${bookId})"]`).closest('.card');
-                    const bookData = JSON.parse(bookCard.dataset.book);
-                    const bookTitle = bookCard.querySelector('.card-title').textContent;
-                    const bookAuthor = bookCard.querySelector('.card-subtitle').textContent;
-                    
-                    // Get condition - look for the small element that contains "Condition:"
-                    const conditionElement = Array.from(bookCard.querySelectorAll('small')).find(el => el.textContent.includes('Condition:'));
-                    const bookCondition = conditionElement ? conditionElement.textContent.replace('Condition: ', '') : 'Unknown';
-                    
-                    // Get genre - look for the small element that contains "Genre:"
-                    const genreElement = Array.from(bookCard.querySelectorAll('small')).find(el => el.textContent.includes('Genre:'));
-                    const bookGenre = genreElement ? genreElement.textContent.replace('Genre: ', '') : '';
-                    
-                    // Get sharing type from the stored book data
-                    const bookSharingType = bookData.sharingType || 'Unknown';
-                    
-                    // Store the sharing type for later use
-                    currentBookSharingType = bookSharingType;
-                    currentBookData = bookData;
-                    
-                    // Show a simple confirmation dialog
-                    const message = prompt(`Request "${bookTitle}" by ${bookAuthor}?\n\nPlease enter a message for the book owner (optional):`);
-                    
-                    if (message !== null) { // User didn't cancel
-                        sendRequest(bookId, message, event);
-                    }
+                    sendRequestToBookOwner(bookId, message, bookSharingType, bookLendingDuration);
                 })
                 .catch(error => {
                     console.error('Auth check failed:', error);
@@ -308,9 +407,9 @@
                     window.location.href = '/pages/login.html';
                 });
         }
-        
-        function sendRequest(bookId, message, event) {
-            const sendBtn = event ? event.target : document.querySelector(`[onclick*="requestBook(${bookId})"]`);
+
+        function sendRequestToBookOwner(bookId, message, bookSharingType, bookLendingDuration) {
+            const sendBtn = document.getElementById('sendRequestBtn');
             const originalText = sendBtn.innerHTML;
             
             sendBtn.disabled = true;
@@ -320,27 +419,42 @@
             let endpoint = '/requests/api/give-away';
             let requestBody = `bookId=${bookId}&message=${encodeURIComponent(message)}`;
             
-            if (currentBookSharingType === 'LEND') {
+            if (bookSharingType === 'LEND') {
                 // For lending, use the book's maximum lending duration or a default
-                const maxDuration = currentBookData.lendingDurationDays || 30; // Default to 30 days if not specified
+                const maxDuration = bookLendingDuration || 30; // Default to 30 days if not specified
                 endpoint = '/requests/api/lend';
                 requestBody = `bookId=${bookId}&message=${encodeURIComponent(message)}&requestedDurationDays=${maxDuration}`;
-            } else if (currentBookSharingType === 'SWAP') {
-                // For swap, we need to prompt for offered book ID
-                const offeredBookId = prompt('Enter the ID of the book you want to offer in exchange:');
-                if (offeredBookId === null) {
+            } else if (bookSharingType === 'SWAP') {
+                // For swap, we need to get the user's available books
+                fetch('/books/api/swappable', {
+                    method: 'GET',
+                    credentials: 'include'
+                })
+                .then(response => response.json())
+                .then(books => {
+                    if (!Array.isArray(books) || books.length === 0) {
+                        alert('Please LIST a book or CHANGE a book sharing type to SWAP for swapping request');
+                        sendBtn.disabled = false;
+                        sendBtn.innerHTML = originalText;
+                        return;
+                    }
+                    
+                    // Store the swap context
+                    swapMessage = message;
+                    swapSendBtn = sendBtn;
+                    swapOriginalText = originalText;
+                    selectedBookForSwap = null;
+                    
+                    // Show book selection modal
+                    showBookSelectionModal(books, message, sendBtn, originalText);
+                })
+                .catch(error => {
+                    console.error('Failed to fetch swappable books:', error);
+                    alert('Failed to load your books. Please try again.');
                     sendBtn.disabled = false;
                     sendBtn.innerHTML = originalText;
-                    return;
-                }
-                if (!offeredBookId || isNaN(parseInt(offeredBookId))) {
-                    alert('Please enter a valid book ID');
-                    sendBtn.disabled = false;
-                    sendBtn.innerHTML = originalText;
-                    return;
-                }
-                endpoint = '/requests/api/swap';
-                requestBody = `bookId=${bookId}&message=${encodeURIComponent(message)}&offeredBookId=${offeredBookId}`;
+                });
+                return; // Don't proceed with the regular request flow
             }
             
             fetch(endpoint, {
@@ -362,6 +476,7 @@
                     }
                 } else {
                     alert('Request sent successfully! The book owner will be notified.');
+                    requestModal.hide();
                     // Refresh the page to show updated status
                     window.location.reload();
                 }
@@ -373,6 +488,115 @@
             .finally(() => {
                 sendBtn.disabled = false;
                 sendBtn.innerHTML = originalText;
+            });
+        }
+        
+        function showBookSelectionModal(books, message, sendBtn, originalText) {
+            // Store the swap context
+            swapMessage = message;
+            swapSendBtn = sendBtn;
+            swapOriginalText = originalText;
+            selectedBookForSwap = null;
+
+            // Populate the book selection list
+            const bookSelectionList = document.getElementById('bookSelectionList');
+            let html = '';
+
+            books.forEach(book => {
+                const sharingTypeDisplay = book.sharingType ? book.sharingType.replace('_', ' ') : 'Unknown';
+                
+                html += `
+                    <div class="col-md-6">
+                        <div class="card h-100 book-selection-card" data-book-id="${book.id}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title mb-0">${book.title}</h6>
+                                    <span class="badge bg-success">${sharingTypeDisplay}</span>
+                                </div>
+                                <h6 class="card-subtitle mb-2 text-muted">${book.author}</h6>
+                                ${book.genre ? `<p class="card-text"><small class="text-muted">Genre: ${book.genre}</small></p>` : ''}
+                                <p class="card-text"><small class="text-muted">Condition: ${book.condition}</small></p>
+                                ${book.description ? `<p class="card-text"><small class="text-muted">${book.description}</small></p>` : ''}
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn btn-outline-primary btn-sm w-100" onclick="selectBookForSwap(${book.id})">
+                                    Select This Book
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            bookSelectionList.innerHTML = html;
+
+            // Show the modal
+            bookSelectionModal.show();
+        }
+
+        function selectBookForSwap(bookId) {
+            selectedBookForSwap = bookId;
+            
+            // Update UI to show selection
+            document.querySelectorAll('.book-selection-card').forEach(card => {
+                card.classList.remove('border-primary');
+                const btn = card.querySelector('button');
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-success');
+                btn.textContent = 'Select This Book';
+            });
+
+            const selectedCard = document.querySelector(`[data-book-id="${bookId}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('border-primary');
+                const btn = selectedCard.querySelector('button');
+                btn.classList.remove('btn-outline-success');
+                btn.classList.add('btn-success');
+                btn.textContent = '✓ Selected';
+            }
+
+            // Send the swap request
+            sendSwapRequest(bookId);
+        }
+
+        function sendSwapRequest(offeredBookId) {
+            const endpoint = '/requests/api/swap';
+            const requestBody = `bookId=${currentBookData.id}&message=${encodeURIComponent(swapMessage)}&offeredBookId=${offeredBookId}`;
+
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                credentials: 'include',
+                body: requestBody
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    // Check if it's an authentication error
+                    if (data.error === 'Not authenticated') {
+                        alert('Please login or signup to request books. You can create an account to start requesting books from other users.');
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } else {
+                    alert('Swap request sent successfully! The book owner will be notified.');
+                    bookSelectionModal.hide();
+                    requestModal.hide();
+                    // Refresh the page to show updated status
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Swap request failed:', error);
+                alert('Failed to send swap request. Please try again.');
+            })
+            .finally(() => {
+                if (swapSendBtn) {
+                    swapSendBtn.disabled = false;
+                    swapSendBtn.innerHTML = swapOriginalText;
+                }
             });
         }
         </script>

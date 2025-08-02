@@ -110,6 +110,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     
     /**
      * find books that can be swapped (for swap requests)
+     * Returns books with SWAP sharing type that can be offered for swapping
      */
     @Query("SELECT b FROM Book b WHERE b.ownerId = :ownerId AND b.status = 'AVAILABLE' AND b.sharingType = 'SWAP'")
     List<Book> findSwappableBooksByOwner(@Param("ownerId") Long ownerId);

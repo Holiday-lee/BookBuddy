@@ -266,7 +266,9 @@
                 <!-- Auth button-->
                 <div class="d-flex">
                     <div id="auth-buttons" class="auth-buttons">
-                        <a href="/pages/login.html" class="btn btn-outline-primary me-2">Login</a>
+                        <button class="btn btn-success btn-sm" onclick="window.location.replace('login.html')">
+                            🔐 Login
+                        </button>
                         <a href="/pages/register.html" class="btn btn-primary me-2">Sign Up</a>
                     </div>
                     
@@ -294,8 +296,8 @@
                 <div class="chat-list-header">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="fas fa-comments"></i> Conversations</h5>
-                        <button class="btn btn-outline-primary btn-sm" onclick="refreshChats()">
-                            <i class="fas fa-sync-alt"></i>
+                        <button class="btn btn-success btn-sm" onclick="loadChats()">
+                            🔄 Refresh Chats
                         </button>
                     </div>
                 </div>
@@ -335,8 +337,8 @@
                 <div class="message-input-container" id="messageInputContainer" style="display: none;">
                     <div class="message-input-group">
                         <textarea class="form-control message-input" id="messageInput" placeholder="Type your message..." rows="1"></textarea>
-                        <button class="btn btn-primary send-button" id="sendButton" type="button">
-                            <i class="fas fa-paper-plane"></i>
+                        <button class="btn btn-success send-button" id="sendButton" type="button">
+                            📤 Send
                         </button>
                     </div>
                 </div>

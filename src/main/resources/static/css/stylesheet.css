@@ -103,6 +103,14 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 500;
 }
 
+.btn-link {
+    color: #28a745
+}
+
+.btn-link:hover {
+    color: #1e7e34;
+}
+
 .btn:hover {
     background-color: #f0f0f0;
 }

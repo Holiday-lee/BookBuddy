@@ -544,6 +544,90 @@ public class BookController {
         }
     }
 
+    /**
+     * API: Update book sharing type
+     */
+    @PostMapping("/api/{id}/sharing-type")
+    @ResponseBody
+    public ResponseEntity<?> updateBookSharingType(@PathVariable Long id,
+                                                 @RequestParam("sharingType") String sharingTypeStr,
+                                                 @RequestParam(value = "lendingDurationDays", required = false) String lendingDurationStr,
+                                                 HttpSession session) {
+        try {
+            // Get current user from Spring Security authentication
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated() || 
+                "anonymousUser".equals(authentication.getPrincipal())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
+            }
+            
+            // Get user by email from authentication
+            String email = authentication.getName();
+            Optional<User> userOpt = userService.findByEmail(email);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User not found"));
+            }
+            
+            Long userId = userOpt.get().getId();
+            
+            // Find the book
+            Optional<Book> bookOpt = bookService.findById(id);
+            if (bookOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Book not found"));
+            }
+            
+            Book book = bookOpt.get();
+            if (!book.getOwnerId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "You can only update your own books"));
+            }
+            
+            // Validate sharing type
+            Book.SharingType sharingType;
+            try {
+                sharingType = Book.SharingType.valueOf(sharingTypeStr);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid sharing type"));
+            }
+            
+            // Validate lending duration for LEND type
+            Integer lendingDurationDays = null;
+            if (sharingType == Book.SharingType.LEND) {
+                if (lendingDurationStr == null || lendingDurationStr.trim().isEmpty()) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Lending duration is required for LEND type"));
+                }
+                try {
+                    lendingDurationDays = Integer.parseInt(lendingDurationStr);
+                    if (lendingDurationDays < 1 || lendingDurationDays > 365) {
+                        return ResponseEntity.badRequest().body(Map.of("error", "Lending duration must be between 1 and 365 days"));
+                    }
+                } catch (NumberFormatException e) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Invalid lending duration"));
+                }
+            }
+            
+            // Update the book
+            book.setSharingType(sharingType);
+            if (lendingDurationDays != null) {
+                book.setLendingDurationDays(lendingDurationDays);
+            } else {
+                book.setLendingDurationDays(null);
+            }
+            
+            bookService.updateBook(id, book.getTitle(), book.getAuthor(), book.getGenre(), 
+                                 book.getIsbn(), book.getCondition(), book.getDescription(), 
+                                 book.getPickupLocation());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Sharing type updated successfully");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to update sharing type"));
+        }
+    }
+
 
 
 

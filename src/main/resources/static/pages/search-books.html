@@ -113,7 +113,7 @@
                                 </div>
                                 <div class="row mt-3">
                                     <div class="col-12">
-                                        <button type="submit" class="btn btn-primary">
+                                        <button type="submit" class="btn btn-success">
                                             🔍 Search Books
                                         </button>
                                         <button type="button" class="btn btn-outline-secondary ms-2" id="useMyLocation">
@@ -157,7 +157,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="sendRequestBtn">Send Request</button>
+                        <button type="button" class="btn btn-success" id="sendRequestBtn">Send Request</button>
                     </div>
                 </div>
             </div>
@@ -367,7 +367,7 @@
                                 ${book.owner ? `<p class="card-text"><small class="text-muted">👤 Owner: <a href="/pages/user-profile.html?id=${book.owner.id}" class="text-decoration-none">${book.owner.fullName}</a></small></p>` : ''}
                             </div>
                             <div class="card-footer">
-                                <button class="btn btn-primary btn-sm" onclick="requestBook(${book.id}, event)" ${book.status !== 'AVAILABLE' ? 'disabled' : ''}>
+                                <button class="btn btn-success btn-sm" onclick="requestBook(${book.id}, event)" ${book.status !== 'AVAILABLE' ? 'disabled' : ''}>
                                     📖 Request Book
                                 </button>
                             </div>
@@ -494,7 +494,7 @@
                 .then(response => response.json())
                 .then(books => {
                     if (!Array.isArray(books) || books.length === 0) {
-                        alert('Please list a book for swapping request');
+                        alert('Please LIST a book or CHANGE a book sharing type to SWAP for swapping request');
                         sendBtn.disabled = false;
                         sendBtn.innerHTML = originalText;
                         return;
@@ -608,8 +608,8 @@
             document.querySelectorAll('.book-selection-card').forEach(card => {
                 card.classList.remove('border-primary');
                 const btn = card.querySelector('button');
-                btn.classList.remove('btn-primary');
-                btn.classList.add('btn-outline-primary');
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-success');
                 btn.textContent = 'Select This Book';
             });
 
@@ -617,8 +617,8 @@
             if (selectedCard) {
                 selectedCard.classList.add('border-primary');
                 const btn = selectedCard.querySelector('button');
-                btn.classList.remove('btn-outline-primary');
-                btn.classList.add('btn-primary');
+                btn.classList.remove('btn-outline-success');
+                btn.classList.add('btn-success');
                 btn.textContent = '✓ Selected';
             }
 

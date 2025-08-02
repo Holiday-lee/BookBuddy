@@ -152,7 +152,7 @@
                 container.innerHTML = `
                     <div class="text-center text-muted">
                         <p>You haven't sent any requests yet.</p>
-                        <a href="/pages/search-books.html" class="btn btn-primary">Search for Books</a>
+                        <a href="/pages/search-books.html" class="btn btn-success">Search for Books</a>
                     </div>
                 `;
                 return;
@@ -228,7 +228,7 @@
             }
             
             if (request.status === 'ACCEPTED') {
-                buttons += `<button class="btn btn-sm btn-primary" onclick="openChat(${request.id})">Open Chat</button>`;
+                buttons += `<button class="btn btn-sm btn-success" onclick="openChat(${request.id})">Open Chat</button>`;
             }
             
             return buttons;
