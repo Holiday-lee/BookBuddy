@@ -46,7 +46,7 @@ A Spring Boot application for sharing and exchanging books between users.
 
 3. **Configure the Web Service**
    - **Name**: `bookbuddy` (or your preferred name)
-   - **Environment**: `Java`
+   - **Environment**: `Docker`
    - **Build Command**: `./mvnw clean package -DskipTests`
    - **Start Command**: `java -jar target/bookbuddy-0.0.1-SNAPSHOT.jar`
 

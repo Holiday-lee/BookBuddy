@@ -19,7 +19,7 @@
    - Click "New +" → "Web Service"
    - Connect your GitHub repository
    - Use these settings:
-     - **Environment**: Java
+     - **Environment**: Docker
      - **Build Command**: `./mvnw clean package -DskipTests`
      - **Start Command**: `java -jar target/bookbuddy-0.0.1-SNAPSHOT.jar`
 
