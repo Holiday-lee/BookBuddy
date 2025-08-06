@@ -494,7 +494,7 @@
                 .then(response => response.json())
                 .then(books => {
                     if (!Array.isArray(books) || books.length === 0) {
-                        alert('Please LIST a book or CHANGE a book sharing type to SWAP for swapping request');
+                        alert('Please list a book with \'Swap\' sharing type first, or make sure your existing listed books are set to \'Swap\' type.');
                         sendBtn.disabled = false;
                         sendBtn.innerHTML = originalText;
                         return;
