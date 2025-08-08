@@ -14,6 +14,11 @@ import org.springframework.transaction.annotation.Transactional; // for readONLY
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 
+ * @author holiday
+ */
+
 @Service //marks it as a Spring service (i.e., contains business logic)
 @Transactional //ensures that all DB operations in each method are atomic (rollback on failure)
 public class UserService {
